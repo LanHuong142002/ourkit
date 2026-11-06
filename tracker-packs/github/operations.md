@@ -12,6 +12,22 @@ gh issue view <number> --json number,title,body,state,labels,author,comments,url
 
 Read `title` as the ticket's Title and `body` as its other fields.
 
+## Check trust
+
+Use these for Hands-off intake (`.ourkit/kit/core/intake.md`). A team member is someone with write access or above. Replace `{owner}` and `{repo}` with this repository's.
+
+- **`authorIsTeam`:** find who wrote the ticket, then true if their permission is `admin` or `write`. Don't rely on `author_association`, because `COLLABORATOR` can mean read-only access.
+  `gh api repos/{owner}/{repo}/issues/<number> --jq .user.login`
+  `gh api repos/{owner}/{repo}/collaborators/<login>/permission --jq .permission`
+- **`readyLabelPresent`:** true if the ticket's labels include `ourkit:ready`.
+- **`readyLabelAppliedByTeam`:** find who applied the label most recently, then true if their permission is `admin` or `write`. (The `permission` field reports a maintainer as `write`.)
+  `gh api repos/{owner}/{repo}/issues/<number>/events --paginate --jq '[.[] | select(.event == "labeled" and .label.name == "ourkit:ready")] | last | .actor.login'`
+  `gh api repos/{owner}/{repo}/collaborators/<login>/permission --jq .permission`
+- **`editedByOutsiderAfterReady`:** true if the ticket was edited after the label was applied, by someone without that permission. A ticket written by a team member and never labelled is false unless someone else edited it. Get the edit, and the label's time from the same events call:
+  `gh api graphql -f query='query($o:String!,$n:String!,$i:Int!){repository(owner:$o,name:$n){issue(number:$i){lastEditedAt editor{login}}}}' -F o=<owner> -F n=<repo> -F i=<number>`
+
+If a command fails, or the person isn't found, leave that fact out of the file.
+
 ## Change status
 
 GitHub Issues has only open and closed, so progress is shown with labels. Remove the previous label when adding the next.
