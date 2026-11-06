@@ -14,6 +14,9 @@ node .ourkit/kit/bin/ourkit.js <subcommand>
 | `check --project` | Verify Project Roles, Overrides and Connectors |
 | `pending` | Print setup work still waiting for the user, in one line |
 | `pending add "<text>"`, `pending done <id>` | Save or finish a waiting item |
+| `mode [pair\|hands-off]` | Read or set the Mode of the Active Change |
+| `decision add`, `decision list` | Write or read the Decision Log |
+| `question add`, `question answer`, `question list` | Write or read the Question Batch |
 | `tier scan`, `tier set`, `tier show` | Find Sensitive Area signals, then set or read the Tier |
 | `ticket <body-file> --title "<title>" [--pr]` | Assess a ticket or PR against the Ticket Standard |
 | `pack add <pack-folder>` | Install a Stack Pack |
