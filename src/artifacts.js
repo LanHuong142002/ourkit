@@ -1,12 +1,14 @@
 // The documents a change produces on its way through the Stages, and what each must contain.
 const fs = require('fs');
 const path = require('path');
+const { assess, parseFields } = require('./ticket-standard');
 
 const ARTIFACTS = {
   spec: { folder: 'specs', sections: ['Goal', 'Requirements', 'Acceptance Criteria', 'Out of Scope', 'Open Questions'] },
   plan: { folder: 'plans', sections: ['Approach', 'Prior Art', 'Changes', 'Risks', 'Test Strategy'] },
   tasks: { folder: 'tasks', sections: ['Tasks'], check: checkTasks },
   report: { folder: 'reports', sections: ['Summary', 'Details'], check: checkReport },
+  epic: { folder: 'epics', sections: [], check: checkEpic },
 };
 
 const relativePathFor = (name, id) =>
@@ -78,6 +80,34 @@ function checkReport(text) {
   const summary = text.match(/^## Summary[ \t]*\n([\s\S]*?)(?=^## )/m);
   const lines = summary ? summary[1].split('\n').filter((line) => line.trim()).length : 0;
   return lines === 5 ? [] : [`the Summary must be exactly 5 lines, and it has ${lines}`];
+}
+
+// Every Feature must itself meet the Ticket Standard, and dependencies must form an order.
+function checkEpic(text) {
+  const matches = [...text.matchAll(/^## F(\d+)[ \t]+(.*)$/gm)];
+  if (matches.length === 0) return ['there are no Features; write each as "## F1 Title"'];
+  const problems = [];
+  const features = matches.map((match, index) => {
+    const end = index + 1 < matches.length ? matches[index + 1].index : text.length;
+    const body = text.slice(match.index + match[0].length, end).trim();
+    const blockedBy = (parseFields(body)['Blocked by'] || '');
+    return { id: Number(match[1]), title: match[2].trim(), body, dependsOn: [...blockedBy.matchAll(/F(\d+)/g)].map((m) => Number(m[1])) };
+  });
+  const ids = features.map((feature) => feature.id);
+  const repeated = ids.filter((id, index) => ids.indexOf(id) !== index);
+  if (repeated.length > 0) problems.push(`Feature numbers repeat: ${[...new Set(repeated)].map((id) => `F${id}`).join(', ')}`);
+  for (const feature of features) {
+    for (const { criterion, message } of assess({ title: feature.title, body: feature.body })) {
+      problems.push(`F${feature.id}: [${criterion}] ${message}`);
+    }
+    if (!/^\*\*Blocked by:\*\*/m.test(feature.body)) problems.push(`F${feature.id} needs a "Blocked by:" line, using "none" if nothing`);
+    for (const dependency of feature.dependsOn) {
+      if (!ids.includes(dependency)) problems.push(`F${feature.id} is blocked by F${dependency}, which doesn't exist`);
+    }
+  }
+  const cycle = findCycle(features);
+  if (cycle) problems.push(`Features block each other in a circle: ${cycle.map((id) => `F${id}`).join(' -> ')}`);
+  return problems;
 }
 
 // Returns what's wrong with an artifact, as a list of problems.
