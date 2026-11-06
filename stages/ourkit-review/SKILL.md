@@ -34,4 +34,4 @@ When no blocking finding is left, run `ourkit review complete`, then `ourkit gat
 
 A Patch ends here. In Pair, tell the user the result so they can commit it. In Hands-off, continue to Ship to open its PR.
 
-Everything else continues to Ship. Don't push, merge or deploy in this Stage.
+Everything else continues to Ship. In Pair, also suggest that the user runs `/ourkit-huh` if they'd like to understand the change first. Don't push, merge or deploy in this Stage.
