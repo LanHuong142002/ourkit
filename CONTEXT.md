@@ -97,7 +97,7 @@ Cỡ của một thay đổi — Patch, Feature hoặc Epic — quyết định 
 _Avoid_: size, level, mode
 
 **Patch**:
-Tier nhỏ nhất: chỉ đi Build và Review.
+Tier nhỏ nhất: chỉ đi Build và Review. Ở Pair, Patch kết thúc sau Review và người dùng tự commit; ở Hands-off, agent mở PR.
 
 **Feature**:
 Tier đi đủ mọi Stage.
@@ -128,6 +128,10 @@ _Avoid_: quiz, test (khi nói về người dùng)
 **Sensitive Area**:
 Phần của hệ thống mà mọi thay đổi chạm vào đều ít nhất là Feature, dù chỉ một dòng: auth/phân quyền, dữ liệu, schema, tiền, API public.
 _Avoid_: critical path, risky code
+
+**Prior Art**:
+Giải pháp đã có sẵn — trong chính project, trong thư viện hoặc công cụ chính thức — mà agent phải tìm và cân nhắc ở Stage Plan trước khi tự viết mới; kết luận (dùng lại, hoặc viết mới kèm lý do) được ghi vào plan, và vào Decision Log nếu ở Hands-off.
+_Avoid_: research, references
 
 ### Cài đặt
 
