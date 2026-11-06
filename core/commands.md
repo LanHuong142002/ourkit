@@ -18,6 +18,7 @@ node .ourkit/kit/bin/ourkit.js <subcommand>
 | `mode [pair\|hands-off]` | Read or set the Mode of the Active Change |
 | `decision add`, `decision list` | Write or read the Decision Log |
 | `question add`, `question answer`, `question list` | Write or read the Question Batch |
+| `review packet`, `review add`, `review resolve`, `review list`, `review complete` | Prepare a review and record its findings |
 | `task list`, `task done`, `task block`, `task reopen` | Track progress through the tasks |
 | `tier scan`, `tier set`, `tier show` | Find Sensitive Area signals, then set or read the Tier |
 | `ticket <body-file> --title "<title>" [--pr]` | Assess a ticket or PR against the Ticket Standard |
