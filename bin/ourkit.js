@@ -9,6 +9,7 @@ const subcommands = {
   rules: () => require('../src/rules').main(args[0]),
   pending: () => require('../src/connectors').main(args),
   pack: () => require('../src/stack-pack').main(args[0], args[1], args[2]),
+  tier: () => require('../src/tier').main(args),
   ticket: () => require('../src/ticket-standard').main(args),
   upgrade: () => require('../src/upgrade').main(args),
 };
