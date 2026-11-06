@@ -97,5 +97,4 @@ test('the Stage looks for Prior Art first and approves only on the user\'s word'
   for (const required of ['Look for Prior Art', 'ourkit gate artifact plan', 'Only after they approve', 'stop here', "Don't write code"]) {
     assert.ok(stage.includes(required), required);
   }
-  assert.ok(!stage.includes('Lessons'), 'reading Lessons belongs to #27');
 });
