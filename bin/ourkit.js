@@ -16,6 +16,10 @@ if (process.argv[2] === 'rules') {
   process.exit(require('../src/rules').main(process.argv[3]));
 }
 
+if (process.argv[2] === 'pack') {
+  process.exit(require('../src/stack-pack').main(process.argv[3], process.argv[4], process.argv[5]));
+}
+
 const KIT_ROOT = path.join(__dirname, '..');
 const projectDir = path.resolve(process.argv[2] || process.cwd());
 
