@@ -10,6 +10,7 @@ const SKILL_NAME_MAX = 64;
 const DESCRIPTION_MAX = 1024;
 const STAGE_PREFIX = 'ourkit-';
 const FORBIDDEN_ROLES = ['fullstack', 'full-stack'];
+const MODEL_STRENGTHS = ['strong', 'balanced', 'cheap'];
 const PROJECT_ROLES_DIR = path.join('.ourkit', 'roles');
 
 // ADR 0002: Core never assumes a stack. A list can't catch everything, so this
@@ -177,6 +178,48 @@ function checkStackPack(root, folder) {
   return problems;
 }
 
+// ADR 0008: a Host Shell with subagents maps each strength to a model and names it in frontmatter.
+function checkHostAgents(root, host, shell) {
+  const agentsFolder = path.join('hosts', host, 'agents');
+  const absolute = path.join(root, agentsFolder);
+  if (!fs.existsSync(absolute)) return [];
+  const problems = [];
+  const report = (file, message) => problems.push({ file, contract: 'Host Shell', message });
+  const shellPath = path.join('hosts', host, 'shell.json');
+
+  const { agentsDir, models } = shell;
+  if (
+    typeof agentsDir !== 'string' ||
+    !agentsDir.trim() ||
+    path.isAbsolute(agentsDir) ||
+    path.win32.isAbsolute(agentsDir) ||
+    agentsDir.split(/[\\/]/).includes('..')
+  ) {
+    report(shellPath, 'agentsDir must be a path inside the project');
+  }
+  const validModels = [];
+  for (const strength of MODEL_STRENGTHS) {
+    const model = models && models[strength];
+    if (typeof model !== 'string' || !model.trim()) report(shellPath, `models must map "${strength}" to a model`);
+    else validModels.push(model);
+  }
+  for (const file of fs.readdirSync(absolute)) {
+    const relative = path.join(agentsFolder, file);
+    const parsed = parseFrontmatter(readText(path.join(root, relative)));
+    if (!parsed) {
+      report(relative, 'must start with a frontmatter block');
+      continue;
+    }
+    const { name, description, model } = parsed.fields;
+    if (name !== path.basename(file, '.md')) report(relative, `name must match its file "${path.basename(file, '.md')}"`);
+    if (!name || !name.startsWith(STAGE_PREFIX)) report(relative, `name must start with "${STAGE_PREFIX}"`);
+    if (!description) report(relative, 'frontmatter must set description');
+    if (!validModels.includes(model)) report(relative, `model must be one of the Host Shell's models: ${validModels.join(', ')}`);
+    if (!parsed.body.trim()) report(relative, 'must have instructions after the frontmatter');
+  }
+  return problems;
+}
+
 function checkHostShell(root, host) {
   const shellPath = path.join('hosts', host, 'shell.json');
   const report = (message) => ({ file: shellPath, contract: 'Host Shell', message });
@@ -194,6 +237,7 @@ function checkHostShell(root, host) {
   }
   const problems = [];
   if (shell.host !== host) problems.push(report(`host must match its folder "${host}"`));
+  problems.push(...checkHostAgents(root, host, shell));
   const { stagesDir } = shell;
   if (typeof stagesDir !== 'string' || !stagesDir.trim()) {
     problems.push(report('stagesDir must be a non-empty path'));

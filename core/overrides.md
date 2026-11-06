@@ -8,8 +8,9 @@ Kit files in a project are read-only (ADR 0007). To customize one, put a copy at
 | `.ourkit/kit/roles/backend/checklist.md` | `.ourkit/overrides/roles/backend/checklist.md` |
 
 | `.claude/skills/ourkit-plan/SKILL.md` | `.ourkit/overrides/stages/ourkit-plan/SKILL.md` |
+| `.claude/agents/ourkit-runner.md` | `.ourkit/overrides/agents/ourkit-runner.md` |
 
-The Override replaces the whole file and keeps the original's place in rule layering. `ourkit rules` labels it `(Override)`. A Stage Override takes effect the next time the Installer or `upgrade` runs, because the Host reads Stages from its own folder.
+The Override replaces the whole file and keeps the original's place in rule layering. `ourkit rules` labels it `(Override)`. A Stage or subagent Override takes effect the next time the Installer or `upgrade` runs, because the Host reads those from its own folders.
 
 ## Upgrading
 

@@ -1,4 +1,10 @@
 {
   "host": "claude-code",
-  "stagesDir": ".claude/skills"
+  "stagesDir": ".claude/skills",
+  "agentsDir": ".claude/agents",
+  "models": {
+    "strong": "opus",
+    "balanced": "sonnet",
+    "cheap": "haiku"
+  }
 }

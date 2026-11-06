@@ -6,6 +6,7 @@ const { INSTALL_RECORD, hashFile, planFiles } = require('./install');
 const { KIT_DIR, OVERRIDES_DIR, orphanOverrides } = require('./overrides');
 
 const STAGES_DIR = path.join('.claude', 'skills');
+const AGENTS_DIR = path.join('.claude', 'agents');
 const toRecordPath = (p) => p.replace(/\\/g, '/');
 
 // Where a hand edit to this kit file should move. Returns null when an Override can't
@@ -14,6 +15,9 @@ function overridePathFor(target) {
   const normalized = path.normalize(target);
   if (normalized.startsWith(STAGES_DIR + path.sep)) {
     return path.join(OVERRIDES_DIR, 'stages', path.relative(STAGES_DIR, normalized));
+  }
+  if (normalized.startsWith(AGENTS_DIR + path.sep)) {
+    return path.join(OVERRIDES_DIR, 'agents', path.relative(AGENTS_DIR, normalized));
   }
   const relative = path.relative(KIT_DIR, normalized);
   if (relative.startsWith(`bin${path.sep}`) || relative.startsWith(`src${path.sep}`)) return null;
