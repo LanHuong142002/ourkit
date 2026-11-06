@@ -2,6 +2,7 @@
 // Role, Stack Pack and Tracker Pack contracts arrive in #5, #6 and #32.
 const fs = require('fs');
 const path = require('path');
+const { checkConnectors } = require('./connectors');
 const { OVERRIDES_DIR, orphanOverrides } = require('./overrides');
 
 const SKILL_NAME = /^[a-z0-9]+(-[a-z0-9]+)*$/;
@@ -249,6 +250,7 @@ function runContractCheck(root) {
 function runProjectCheck(projectDir) {
   const roles = subfolders(path.join(projectDir, PROJECT_ROLES_DIR));
   const problems = roles.flatMap((role) => checkRole(projectDir, PROJECT_ROLES_DIR, role));
+  problems.push(...checkConnectors(projectDir));
   for (const relative of orphanOverrides(projectDir)) {
     problems.push({
       file: path.join(OVERRIDES_DIR, relative),
