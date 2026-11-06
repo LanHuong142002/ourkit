@@ -4,6 +4,15 @@ A package installed into an agent that guides every project through one controll
 
 The kit is under construction and isn't ready for real projects yet.
 
+## Install and upgrade
+
+Run these from the project's folder. The repo is private, so the machine needs access to it.
+
+```
+npx github:LanHuong142002/ourkit
+npx github:LanHuong142002/ourkit upgrade
+```
+
 ## Repo layout
 
 | Folder | Contents |
