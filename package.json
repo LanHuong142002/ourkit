@@ -10,6 +10,7 @@
     "bin",
     "core",
     "hosts",
+    "roles",
     "src",
     "stages"
   ],

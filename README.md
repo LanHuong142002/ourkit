@@ -18,7 +18,7 @@ The kit is under construction and isn't ready for real projects yet.
 | `fixtures/` | Fixture Projects |
 | `test/` | The kit's tests |
 
-A folder appears only once it has content; `roles/` and `stack-packs/` don't exist yet.
+A folder appears only once it has content; `stack-packs/` doesn't exist yet.
 
 ## Development
 

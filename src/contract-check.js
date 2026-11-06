@@ -7,6 +7,8 @@ const SKILL_NAME = /^[a-z0-9]+(-[a-z0-9]+)*$/;
 const SKILL_NAME_MAX = 64;
 const DESCRIPTION_MAX = 1024;
 const STAGE_PREFIX = 'ourkit-';
+const FORBIDDEN_ROLES = ['fullstack', 'full-stack'];
+const PROJECT_ROLES_DIR = path.join('.ourkit', 'roles');
 
 // ADR 0002: Core never assumes a stack. A list can't catch everything, so this
 // stops the common slips and doesn't replace review.
@@ -108,6 +110,30 @@ function checkStage(root, stage) {
   return problems;
 }
 
+// A Project Role follows the same contract, so `rolesDir` is either location.
+function checkRole(root, rolesDir, role) {
+  const problems = [];
+  const report = (file, message) => problems.push({ file, contract: 'Role', message });
+  const folder = path.join(rolesDir, role);
+
+  if (!SKILL_NAME.test(role)) report(folder, 'folder name must be lowercase words joined by single hyphens');
+  if (FORBIDDEN_ROLES.includes(role)) {
+    report(folder, 'Full-stack means enabling the frontend and backend Roles together; it is not a Role');
+  }
+  for (const name of ['guidance.md', 'checklist.md']) {
+    const relative = path.join(folder, name);
+    const absolute = path.join(root, relative);
+    if (!fs.existsSync(absolute)) {
+      report(folder, `must contain ${name}`);
+    } else if (!readText(absolute).trim()) {
+      report(relative, 'must not be empty');
+    } else if (name === 'checklist.md' && !/^- \[ \] \S/m.test(readText(absolute))) {
+      report(relative, 'must have at least one "- [ ]" item');
+    }
+  }
+  return problems;
+}
+
 function checkHostShell(root, host) {
   const shellPath = path.join('hosts', host, 'shell.json');
   const report = (message) => ({ file: shellPath, contract: 'Host Shell', message });
@@ -140,7 +166,7 @@ function checkHostShell(root, host) {
 
 function checkStackNeutral(root) {
   const problems = [];
-  for (const dir of ['core', 'stages']) {
+  for (const dir of ['core', 'roles', 'stages']) {
     for (const file of filesUnder(path.join(root, dir))) {
       const text = readText(file);
       if (text.includes('\0')) continue; // binary resource
@@ -164,19 +190,24 @@ function checkStackNeutral(root) {
 function runContractCheck(root) {
   const stages = subfolders(path.join(root, 'stages'));
   const hosts = subfolders(path.join(root, 'hosts'));
+  const roles = subfolders(path.join(root, 'roles'));
   const problems = [];
   if (stages.length === 0) problems.push({ file: 'stages', contract: 'Stage', message: 'must contain at least one Stage' });
   if (hosts.length === 0) problems.push({ file: 'hosts', contract: 'Host Shell', message: 'must contain at least one Host Shell' });
   for (const stage of stages) problems.push(...checkStage(root, stage));
   for (const host of hosts) problems.push(...checkHostShell(root, host));
+  for (const role of roles) problems.push(...checkRole(root, 'roles', role));
   problems.push(...checkStackNeutral(root));
-  return { problems, stages: stages.length, hosts: hosts.length };
+  return { problems, stages: stages.length, hosts: hosts.length, roles: roles.length };
 }
 
-// Returns the process exit code.
-function main(rootArg) {
-  const root = path.resolve(rootArg || path.join(__dirname, '..'));
-  const { problems, stages, hosts } = runContractCheck(root);
+// Project Roles aren't held to stack neutrality: they belong to one project, whose stack is known.
+function runProjectCheck(projectDir) {
+  const roles = subfolders(path.join(projectDir, PROJECT_ROLES_DIR));
+  return { problems: roles.flatMap((role) => checkRole(projectDir, PROJECT_ROLES_DIR, role)), roles: roles.length };
+}
+
+function report(problems, success) {
   for (const { file, contract, message } of problems) {
     console.error(`${file.replace(/\\/g, '/')}: [${contract}] ${message}`);
   }
@@ -184,8 +215,19 @@ function main(rootArg) {
     console.error(`ourkit check: ${problems.length} problem(s)`);
     return 1;
   }
-  console.log(`ourkit check: OK (${stages} Stage(s), ${hosts} Host Shell(s))`);
+  console.log(`ourkit check: OK (${success})`);
   return 0;
 }
 
-module.exports = { main, runContractCheck };
+// Returns the process exit code.
+function main(firstArg, secondArg) {
+  if (firstArg === '--project') {
+    const { problems, roles } = runProjectCheck(path.resolve(secondArg || process.cwd()));
+    return report(problems, `${roles} Project Role(s)`);
+  }
+  const root = path.resolve(firstArg || path.join(__dirname, '..'));
+  const { problems, stages, hosts, roles } = runContractCheck(root);
+  return report(problems, `${stages} Stage(s), ${hosts} Host Shell(s), ${roles} Role(s)`);
+}
+
+module.exports = { main, runContractCheck, runProjectCheck };

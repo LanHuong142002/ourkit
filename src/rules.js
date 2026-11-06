@@ -5,6 +5,7 @@ const path = require('path');
 
 const KIT_DIR = path.join('.ourkit', 'kit');
 const PROJECT_RULES = path.join('.ourkit', 'rules.md');
+const PROJECT_ROLES = path.join('.ourkit', 'roles');
 
 function markdownUnder(dir) {
   if (!fs.existsSync(dir)) return [];
@@ -26,6 +27,7 @@ function resolveLayers(projectDir) {
   return [
     ...layer('Core', markdownUnder(path.join(kit, 'core'))),
     ...layer('Role', markdownUnder(path.join(kit, 'roles'))),
+    ...layer('Role', markdownUnder(path.join(projectDir, PROJECT_ROLES))),
     ...layer('Stack Pack', markdownUnder(path.join(kit, 'stack-packs'))),
     ...layer('Project Rules', fs.existsSync(projectRules) ? [projectRules] : []),
   ];
