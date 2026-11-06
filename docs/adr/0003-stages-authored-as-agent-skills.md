@@ -1,12 +1,12 @@
 ---
-status: accepted (sửa đổi 2026-11-07: Host Shell của Claude Code cài vào `.claude/` của project, không dùng plugin manifest)
+status: accepted (amended 2026-11-07: the Claude Code Host Shell installs into the project's `.claude/` and doesn't use a plugin manifest)
 ---
 
-# Mỗi Stage được viết theo chuẩn Agent Skills, bọc trong Host Shell của Claude Code
+# Each Stage is written to the Agent Skills standard and wrapped in the Claude Code Host Shell
 
-v1 chỉ chạy trên Claude Code, nhưng mỗi Stage là một thư mục chuẩn Agent Skills (`SKILL.md` + tài nguyên kèm theo) thay vì định dạng riêng của Claude. Phần chỉ Claude hiểu (đường dẫn cài đặt, hook, định nghĩa subagent) nằm trong một lớp vỏ mỏng tách riêng, và Stage được chép vào `.claude/skills/` của project để đi theo git (ADR 0005). Lý do: phần nội dung — nơi chứa gần như toàn bộ giá trị — mang sang agent khác được mà không cần viết lại, trong khi v1 không phải dựng bước build/chuyển đổi.
+v1 runs only on Claude Code, but each Stage is a standard Agent Skills folder (`SKILL.md` plus accompanying resources) rather than a Claude-specific format. The parts only Claude understands (install paths, hooks, subagent definitions) live in a separate thin layer, and Stages are copied into the project's `.claude/skills/` so that they travel with git (ADR 0005). Reason: the content, which holds almost all the value, can move to another agent without being rewritten, and v1 doesn't need a build or conversion step.
 
 ## Considered Options
 
-- Viết thẳng định dạng plugin Claude: nhanh nhất, nhưng mở rộng sau này phải viết bộ chuyển đổi.
-- Nguồn trung lập + bước build sinh ra từng agent: linh hoạt nhất, nhưng tốn công ở v1 khi chỉ có một đích.
+- Writing directly in Claude's plugin format: fastest, but extending later would require a converter.
+- A neutral source plus a build step generating each agent's format: most flexible, but costly in v1 with only one target.

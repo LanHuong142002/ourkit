@@ -1,3 +1,3 @@
-# Gate chỉ chấm phần thay đổi so với Baseline
+# Gates judge only what changed since the Baseline
 
-Khi cài vào project Brownfield, trạng thái code lúc đó được ghi nhận là Baseline; mọi Gate chỉ áp chuẩn lên phần code bị thay đổi so với Baseline, không bắt code cũ phải đạt chuẩn mới. Lý do: nếu lần Review đầu tiên trên một project cũ báo hàng trăm lỗi có sẵn, người dùng sẽ bỏ kit ngay — chuẩn mới chỉ lan dần theo những chỗ được sửa.
+When the kit is installed into a Brownfield project, the state of the code at that moment is recorded as the Baseline; every Gate applies standards only to code changed since the Baseline and doesn't require old code to meet new standards. Reason: if the first Review on an old project reported hundreds of existing errors, the user would drop the kit immediately; new standards spread gradually through the places that get edited.

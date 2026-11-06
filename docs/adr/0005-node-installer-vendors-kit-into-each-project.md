@@ -1,12 +1,12 @@
-# Installer viết bằng Node, chép kit vào từng project; phần suy luận để cho agent
+# The Installer is written in Node and copies the kit into each project; inference is left to the agent
 
-Kit được cài bằng `npx` (Installer viết bằng Node) và được chép thẳng vào từng project, commit cùng repo, thay vì cài global một lần cho cả máy. Installer chỉ làm phần tất định (hỏi Greenfield/Brownfield, chọn Role, chép file, phát hiện sơ bộ); mọi thứ cần hiểu project — Stack Profile, gợi ý stack — được giao cho bước Init chạy trong agent. Lý do: kit sẽ được dùng theo team, nên phiên bản kit phải đi theo git để mọi máy chạy giống nhau; còn luật tĩnh trong CLI không đọc nổi project lộn xộn như agent.
+The kit is installed with `npx` (the Installer is written in Node) and copied directly into each project, committed with the repo, rather than installed globally once per machine. The Installer does only deterministic work (asks Greenfield or Brownfield, selects Roles, copies files, does preliminary detection); everything that requires understanding the project, such as the Stack Profile and stack suggestions, is left to the Init step running in the agent. Reason: the kit will be used by teams, so its version must follow git for every machine to behave the same; and static rules in a CLI can't read a messy project the way an agent can.
 
 ## Considered Options
 
-- Plugin global ở cấp user: cập nhật một lần cho mọi project, nhưng mỗi máy có thể chạy một phiên bản khác.
-- Python/uvx, shell script, binary đơn: Node được chọn vì gần như mọi dev full-stack đã có, và npm cho kênh phát hành public sau này. Runtime của Installer không ràng buộc stack của project (xem ADR 0002).
+- A global plugin at user level: one update covers every project, but each machine may run a different version.
+- Python/uvx, a shell script, a single binary: Node was chosen because almost every full-stack developer already has it, and npm provides a public release channel later. The Installer's runtime doesn't constrain the project's stack (see ADR 0002).
 
 ## Consequences
 
-- Cần lệnh `upgrade` để cập nhật kit trong từng project.
+- An `upgrade` command is needed to update the kit in each project.

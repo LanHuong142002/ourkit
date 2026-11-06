@@ -1,8 +1,8 @@
-# Package độc lập, mượn cấu trúc từ Spec Kit chứ không phụ thuộc vào nó
+# A standalone package that borrows its structure from Spec Kit without depending on it
 
-Chúng ta tự viết toàn bộ các bước và template, lấy cảm hứng (và có thể vendor các template MIT) từ GitHub Spec Kit, nhưng không cài hay gọi `specify` CLI lúc chạy. Lý do: người dùng muốn toàn quyền kiểm soát luồng và không bị ảnh hưởng khi Spec Kit đổi phiên bản (vd bản 1.0 đổi cú pháp lệnh), đồng thời bỏ được dependency Python/uv.
+We write all the steps and templates ourselves, inspired by GitHub Spec Kit (and possibly vendoring its MIT templates), but we don't install or call the `specify` CLI at runtime. Reason: the user wants full control of the flow and doesn't want to be affected when Spec Kit changes versions (for example, version 1.0 changing command syntax), and this also removes the Python/uv dependency.
 
 ## Considered Options
 
-- Spec Kit + preset/extension riêng: nhanh nhất, nhưng luồng lõi vẫn do Spec Kit quyết định.
-- Viết lại từ con số 0, không tham khảo: mất luồng đã được kiểm chứng.
+- Spec Kit plus our own preset or extension: fastest, but Spec Kit would still decide the core flow.
+- Rewriting from zero with no reference: loses a proven flow.

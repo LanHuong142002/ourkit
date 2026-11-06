@@ -1,8 +1,8 @@
-# File kit trong project không bao giờ sửa tay — mọi tùy biến là Override
+# Kit files in a project are never edited by hand; every customization is an Override
 
-Kit được chép vào từng project (ADR 0005), nhưng các file đó được coi là chỉ-đọc: mọi tùy biến nằm trong Override riêng và được ưu tiên hơn file gốc. Khi `upgrade`, Installer chỉ ghi đè file kit; nếu thấy file kit bị sửa tay, nó cảnh báo và đề nghị chuyển phần sửa sang Override. Lý do: người dùng không bao giờ mất công sức khi nâng cấp, và không phải gộp tay như git merge.
+The kit is copied into each project (ADR 0005), but those files are treated as read-only: all customization lives in separate Overrides that take priority over the originals. On `upgrade`, the Installer overwrites only kit files; if it finds a kit file edited by hand, it warns and offers to move the edit into an Override. Reason: users never lose work when upgrading and never have to merge by hand the way they would with git merge.
 
 ## Considered Options
 
-- Ghi đè thẳng: đơn giản nhưng làm mất tùy biến.
-- Hiện diff cho người dùng tự gộp: an toàn nhưng mỗi lần upgrade là một lần merge thủ công.
+- Overwriting directly: simple, but loses customizations.
+- Showing a diff for the user to merge: safe, but every upgrade becomes a manual merge.

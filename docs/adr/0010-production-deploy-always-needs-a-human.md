@@ -1,3 +1,3 @@
-# Deploy lên production luôn cần người bấm
+# Deploying to production always needs a person
 
-Agent được tự deploy lên staging, nhưng không bao giờ tự deploy lên production — kể cả trong Loop Run. Stage Deploy (khung ở v1, làm đầy ở Release 2) đọc lệnh `deploy` và `smoke` từ Stack Profile, nên Core vẫn không giả định hạ tầng nào. Lý do: production là chỗ lỗi chạm tới người dùng thật, và cùng tinh thần với ADR 0009 — merge đã là việc của người, deploy production cũng vậy.
+The agent may deploy to staging by itself, but never deploys to production by itself, even in a Loop Run. The Deploy Stage (a frame in v1, filled in Release 2) reads the `deploy` and `smoke` commands from the Stack Profile, so Core still assumes no infrastructure. Reason: production is where errors reach real users, and in the same spirit as ADR 0009, merging is already a person's job, and so is deploying to production.

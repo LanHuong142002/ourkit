@@ -1,26 +1,33 @@
 # ourkit
 
-Một package cài vào agent để dẫn mọi project đi qua cùng một vòng đời phát triển phần mềm có kiểm soát. Xem thuật ngữ trong [CONTEXT.md](CONTEXT.md) và các quyết định trong [docs/adr](docs/adr).
+A package installed into an agent that guides every project through one controlled software development lifecycle. See the terms in [CONTEXT.md](CONTEXT.md) and the decisions in [docs/adr](docs/adr).
 
-Kit đang được xây dựng và chưa dùng được cho project thật.
+The kit is under construction and isn't ready for real projects yet.
 
-## Cấu trúc repo
+## Repo layout
 
-| Thư mục | Nội dung |
+| Folder | Contents |
 |---|---|
-| `bin/` | Installer |
+| `bin/` | The `ourkit` command |
+| `src/` | Code behind the command |
 | `core/` | Core |
-| `roles/` | Role |
-| `stack-packs/` | Stack Pack |
-| `stages/` | Stage, mỗi Stage là một thư mục chuẩn Agent Skills |
-| `hosts/<host>/` | Host Shell của từng Host |
-| `fixtures/` | Fixture Project |
-| `test/` | Test của kit |
+| `roles/` | Roles |
+| `stack-packs/` | Stack Packs |
+| `stages/` | Stages, each a standard Agent Skills folder |
+| `hosts/<host>/` | The Host Shell for each Host |
+| `fixtures/` | Fixture Projects |
+| `test/` | The kit's tests |
 
-Thư mục chỉ xuất hiện khi đã có nội dung; hiện chưa có `core/`, `roles/` và `stack-packs/`.
+A folder appears only once it has content; `core/`, `roles/` and `stack-packs/` don't exist yet.
 
-## Chạy thử
+## Development
 
 ```
 npm test
+```
+
+Run the Contract Check on the kit:
+
+```
+node bin/ourkit.js check
 ```

@@ -1,7 +1,7 @@
-# Mỗi ticket chạy trong một ngữ cảnh mới; phiên chính chỉ điều phối
+# Each ticket runs in a fresh context; the main session only coordinates
 
-Khi làm nhiều ticket liên tiếp (vd Loop Run), phiên chính chỉ giữ hàng đợi và bản tóm tắt 5 dòng của từng ticket đã xong. Mỗi ticket chạy trong một subagent hoặc phiên mới, xong thì bỏ ngữ cảnh đó; thứ duy nhất được mang sang ticket sau là Lessons và Project Log. Lý do: nếu một phiên làm hết, ngữ cảnh dồn lại nên mỗi tin nhắn sau đắt hơn tin trước, và chỉ vài ticket là chạm limit; tách ngữ cảnh giúp ticket thứ 10 tốn xấp xỉ ticket thứ 1.
+When working through multiple tickets in a row (for example, a Loop Run), the main session keeps only the queue and a five-line summary of each finished ticket. Each ticket runs in a subagent or a new session, and that context is discarded when it finishes; the only things carried to the next ticket are Lessons and the Project Log. Reason: if one session does everything, context accumulates so that each later message costs more than the one before, and a few tickets are enough to reach the limit; separating contexts makes the tenth ticket cost about the same as the first.
 
 ## Considered Options
 
-- Một phiên làm hết: tiện, giữ được mọi chi tiết, nhưng chi phí phình theo số ticket.
+- One session does everything: convenient and keeps every detail, but cost grows with the number of tickets.
