@@ -3,6 +3,7 @@
 const { spawn, spawnSync } = require('child_process');
 const fs = require('fs');
 const path = require('path');
+const { REPORT_PATH, writeReport } = require('./run-report');
 
 const LOOP_PATH = path.join('.ourkit', 'loop.json');
 const SHELL_PATH = path.join('.ourkit', 'kit', 'host', 'shell.json');
@@ -38,11 +39,12 @@ function keepStateOutOfGit(projectDir) {
   const excludeFile = git(projectDir, ['rev-parse', '--git-path', 'info/exclude']);
   if (!excludeFile.ok) return;
   const file = path.resolve(projectDir, excludeFile.output);
-  const entry = LOOP_PATH.replace(/\\/g, '/');
   const existing = fs.existsSync(file) ? fs.readFileSync(file, 'utf8') : '';
-  if (existing.split(/\r?\n/).includes(entry)) return;
+  const present = existing.split(/\r?\n/);
+  const missing = [LOOP_PATH, REPORT_PATH].map((entry) => entry.replace(/\\/g, '/')).filter((entry) => !present.includes(entry));
+  if (missing.length === 0) return;
   fs.mkdirSync(path.dirname(file), { recursive: true });
-  fs.writeFileSync(file, `${existing}${existing && !existing.endsWith('\n') ? '\n' : ''}${entry}\n`);
+  fs.writeFileSync(file, `${existing}${existing && !existing.endsWith('\n') ? '\n' : ''}${missing.join('\n')}\n`);
 }
 
 function writeLoop(projectDir, loop) {
@@ -195,9 +197,11 @@ async function runLoop(projectDir, loop) {
     const parsed = parseSession(result.stdout);
     loop.usedTokens += parsed.tokens;
 
+    const onBranch = git(projectDir, ['branch', '--show-current']).output;
+    const branch = onBranch && onBranch !== main ? onBranch : null;
     const back = returnToDefault(projectDir, main);
     if (back.error) {
-      loop.results.push({ item, outcome: 'unknown', summary: back.error });
+      loop.results.push({ item, branch, outcome: 'unknown', summary: back.error });
       loop.queue.shift();
       return stop('dirty-tree');
     }
@@ -207,7 +211,7 @@ async function runLoop(projectDir, loop) {
       loop.lastError = parsed.summary.slice(0, 500) || result.stderr.slice(0, 500);
       return stop('session-failed');
     }
-    loop.results.push({ item, outcome: parsed.outcome, summary: parsed.summary });
+    loop.results.push({ item, branch, outcome: parsed.outcome, summary: parsed.summary });
     loop.queue.shift();
     writeLoop(projectDir, loop);
   }
@@ -273,7 +277,8 @@ async function main(args) {
   }
   writeLoop(projectDir, loop);
   const finished = await runLoop(projectDir, loop);
-  console.log(JSON.stringify({ stopped: finished.stopped, finished: finished.results.length, queued: finished.queue.length, usedTokens: finished.usedTokens }, null, 2));
+  const report = writeReport(projectDir, finished).replace(/\\/g, '/');
+  console.log(JSON.stringify({ stopped: finished.stopped, finished: finished.results.length, queued: finished.queue.length, usedTokens: finished.usedTokens, report }, null, 2));
   return finished.stopped === 'done' || finished.stopped === 'all-blocked' || finished.stopped === 'budget' ? 0 : 1;
 }
 
