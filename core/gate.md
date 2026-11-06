@@ -23,6 +23,8 @@ The Mode decides what happens next:
 - `ourkit gate run <test|lint|build>` runs the command from the Stack Profile and prints JSON with `status`, `severity`, `action` and, on failure, the end of the output. Exit code 1 means the Gate blocks.
 - `ourkit gate floor` checks whether a Patch has grown into a Sensitive Area. Run it at each Gate of a Patch, because a change's files can differ from when its Tier was set. If it fails, raise the Tier.
 - `ourkit gate scope` prints the files the Gate may judge.
+- `ourkit gate path <document>` prints where a Stage's document lives, such as `spec`.
+- `ourkit gate artifact <document>` checks that the document exists with every section filled in. It blocks at any Tier, because the next Stage can't start from an incomplete document. It checks only that sections are present, so the Stage must still judge their quality.
 
 A `status` of `not-run` means nothing was verified. Report it as not run, never as passed, and never guess a replacement command. Deploying is never a Gate command (ADR 0010).
 
