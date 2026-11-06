@@ -53,8 +53,10 @@ function checklists(projectDir) {
 
 // Everything a Reviewer may see: the spec, the diff and the checklists, and not how the work was done.
 function packet(projectDir, change, record, scope) {
-  const specFile = path.join(projectDir, relativePathFor('spec', change.id));
-  const spec = fs.existsSync(specFile) ? fs.readFileSync(specFile, 'utf8').trim() : '(This change has no spec.)';
+  // A Bug-fix has no spec, and its notes say what it must do.
+  const document = record.flow === 'bug-fix' ? 'bug' : 'spec';
+  const specFile = path.join(projectDir, relativePathFor(document, change.id));
+  const spec = fs.existsSync(specFile) ? fs.readFileSync(specFile, 'utf8').trim() : `(This change has no ${document === 'bug' ? 'Bug-fix notes' : 'spec'}.)`;
   const sections = [
     `# Sensitive Areas\n\n${(record.sensitiveAreas || []).join(', ') || 'None declared.'}`,
     `# Spec\n\n${spec}`,

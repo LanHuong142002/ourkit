@@ -10,6 +10,7 @@ const subcommands = {
   rules: () => require('../src/rules').main(args[0]),
   pending: () => require('../src/connectors').main(args),
   pack: () => require('../src/stack-pack').main(args[0], args[1], args[2]),
+  flow: () => require('../src/mode').flowMain(args),
   gate: () => require('../src/gate').main(args),
   decision: () => require('../src/mode').decisionMain(args),
   lessons: () => require('../src/lessons').main(args),

@@ -14,6 +14,7 @@ node .ourkit/kit/bin/ourkit.js <subcommand>
 | `check --project` | Verify Project Roles, Overrides and Connectors |
 | `pending` | Print setup work still waiting for the user, in one line |
 | `pending add "<text>"`, `pending done <id>` | Save or finish a waiting item |
+| `flow [bug-fix]` | Read or set whether a change follows the Bug-fix flow |
 | `gate scope`, `gate floor`, `gate run <test\|lint\|build>` | Run a Gate on the Active Change |
 | `lessons`, `lessons add <cost\|quality> "<lesson>"` | Read or save Lessons |
 | `log add "<name>" "<summary>" "<link>"` | Add a line to the Project Log |
