@@ -92,6 +92,14 @@ function planFiles(projectDir, roles, tracker) {
   add('core', path.join(KIT_DIR, 'core'));
   add('bin', path.join(KIT_DIR, 'bin'));
   add('src', path.join(KIT_DIR, 'src'));
+  // What a Loop Run needs to start a fresh session on this Host.
+  for (const file of ['shell.json', 'session-settings.json']) {
+    const override = path.join(projectDir, OVERRIDES_DIR, 'host', file);
+    plan.push({
+      source: fs.existsSync(override) ? override : path.join(KIT_ROOT, 'hosts', HOST, file),
+      target: path.join(KIT_DIR, 'host', file),
+    });
+  }
   for (const role of roles) add(path.join('roles', role), path.join(KIT_DIR, 'roles', role));
   if (tracker) plan.push(...trackerPlan(tracker));
   // The Host reads these directly from its own folders, so their Overrides are applied here.

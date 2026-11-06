@@ -24,7 +24,7 @@ Judge the change against its spec, by a reader not biased by how the work was do
 1. Record each finding with `ourkit review add <blocking|non-blocking> "<finding>"`. Keep the Reviewer's file, line and failure scenario in the text. Don't downgrade or drop a finding because it's inconvenient. If you think it's wrong, verify that against the code first.
 2. **Fix blocking findings.** Delegate each fix to the `ourkit-implementer` subagent, verify it, then run `ourkit review resolve <id>`. Resolve a finding only when it's fixed, or you've verified it's wrong and can say why.
    - In Pair, ask the user if a fix is a judgment call.
-   - In Hands-off, make at most two attempts, then stop and add it to the Question Batch (ADR 0009).
+   - In Hands-off, run `ourkit review attempt <id>` before each fix. You get at most two attempts. When it refuses, stop fixing this finding, add it to the Question Batch, and carry on with any independent task (ADR 0009).
 3. **Report non-blocking findings.** In Pair, ask whether to act on them. In Hands-off, list them in your report, and don't act on them unless they're trivial.
 4. **Review again if you changed code.** Anything fixed needs a fresh look, since a fix can break something else.
 

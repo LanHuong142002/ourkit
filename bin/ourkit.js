@@ -17,6 +17,7 @@ const subcommands = {
   intake: () => require('../src/intake').main(args),
   lessons: () => require('../src/lessons').main(args),
   log: () => require('../src/report').main(args),
+  loop: () => require('../src/loop').main(args),
   mode: () => require('../src/mode').modeMain(args),
   question: () => require('../src/mode').questionMain(args),
   task: () => require('../src/tasks').main(args),
