@@ -2,6 +2,7 @@
 // Role, Stack Pack and Tracker Pack contracts arrive in #5, #6 and #32.
 const fs = require('fs');
 const path = require('path');
+const { OVERRIDES_DIR, orphanOverrides } = require('./overrides');
 
 const SKILL_NAME = /^[a-z0-9]+(-[a-z0-9]+)*$/;
 const SKILL_NAME_MAX = 64;
@@ -247,7 +248,15 @@ function runContractCheck(root) {
 // Project Roles aren't held to stack neutrality: they belong to one project, whose stack is known.
 function runProjectCheck(projectDir) {
   const roles = subfolders(path.join(projectDir, PROJECT_ROLES_DIR));
-  return { problems: roles.flatMap((role) => checkRole(projectDir, PROJECT_ROLES_DIR, role)), roles: roles.length };
+  const problems = roles.flatMap((role) => checkRole(projectDir, PROJECT_ROLES_DIR, role));
+  for (const relative of orphanOverrides(projectDir)) {
+    problems.push({
+      file: path.join(OVERRIDES_DIR, relative),
+      contract: 'Override',
+      message: 'has no matching kit file, so it has no effect',
+    });
+  }
+  return { problems, roles: roles.length };
 }
 
 function report(problems, success) {
