@@ -1,14 +1,14 @@
 ---
-status: accepted (sửa đổi 2026-11-07: tự sửa bug sau deploy chờ tới Release 2)
+status: accepted (amended 2026-11-07: automatically fixing post-deploy bugs waits for Release 2)
 ---
 
-# Hai Mode Pair và Hands-off; ticket là dữ liệu, không phải lệnh
+# Two Modes, Pair and Hands-off; a ticket is data, not a command
 
-Mọi thay đổi chạy ở một trong hai Mode, mặc định là Pair. Ở Hands-off, agent tự chốt quyết định (ghi Decision Log), gom câu hỏi (Question Batch), được tự tạo ticket và tự sửa bug phát hiện sau deploy tới mức PR; riêng việc tự sửa bug sau deploy chờ tới Release 2, vì v1 mới có khung của Stage Deploy. Thay đổi chạm Sensitive Area hoặc cần người dùng thao tác trên dịch vụ thì dừng sau Plan và trước Ship, kể cả bug sau deploy. Merge và deploy production luôn là việc của người ở cả hai Mode (ADR 0010).
+Every change runs in one of two Modes, and the default is Pair. In Hands-off, the agent settles decisions itself (recorded in the Decision Log), gathers questions (Question Batch), and may create tickets and fix bugs found after deployment by itself, up to the PR level; automatically fixing post-deploy bugs waits for Release 2, because v1 only has the frame of the Deploy Stage. A change touching a Sensitive Area or needing the user to act on a service stops after Plan and before Ship, including post-deploy bugs. Merging and production deployment are always a person's job in both Modes (ADR 0010).
 
-Vì Hands-off không chờ người duyệt plan, nội dung ticket chỉ được coi là dữ liệu mô tả yêu cầu, không bao giờ là lệnh cho agent; Hands-off chỉ nhận ticket do người trong team tạo hoặc đã được người trong team gắn nhãn `ourkit:ready`, và ticket phải đạt Ticket Standard. Lý do: agent chạy không ai canh trên nội dung do người ngoài viết là đường tấn công prompt injection rõ nhất.
+Because Hands-off doesn't wait for plan approval, ticket content is treated only as data describing a requirement, never as a command to the agent; Hands-off accepts only tickets created by a team member or labelled `ourkit:ready` by a team member, and the ticket must meet the Ticket Standard. Reason: an unattended agent running on content written by outsiders is the clearest path for prompt injection.
 
 ## Considered Options
 
-- Hands-off chờ người duyệt plan cho mọi ticket (bản đầu của ADR 0009): an toàn hơn nhưng không giao được cả backlog trong một lần.
-- Mặc định là Hands-off: nhanh hơn, nhưng nhầm sang Hands-off đắt hơn nhầm sang Pair.
+- Hands-off waits for plan approval on every ticket (the first version of ADR 0009): safer, but a whole backlog can't be handed over at once.
+- Hands-off as the default: faster, but mistakenly using Hands-off costs more than mistakenly using Pair.

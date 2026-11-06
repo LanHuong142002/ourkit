@@ -1,7 +1,7 @@
 ---
-status: accepted (sửa đổi 2026-11-06: bỏ yêu cầu plan phải được duyệt trước)
+status: accepted (amended 2026-11-06: removed the requirement that the plan be approved first)
 ---
 
-# Loop Run phải có Budget và không bao giờ tự Ship thay đổi chạm Sensitive Area
+# A Loop Run must have a Budget and never Ships a change touching a Sensitive Area by itself
 
-Loop Run tự đi từ Spec tới PR mà không chờ người duyệt plan; agent tự chốt Tier và Prior Art rồi ghi vào Decision Log, và khi xong để lại một Run Report để người dùng đọc lại hoặc hỏi lại sau. Câu hỏi phát sinh được gom vào Question Batch, việc lặt vặt thì tự quyết và ghi Decision Log. Lỗi blocking từ Reviewer được tự sửa tối đa 2 lần rồi bỏ qua sang Task độc lập khác. Thay đổi thường được đẩy tới PR nhưng không merge; thay đổi chạm Sensitive Area, hoặc cần người dùng thao tác trên một dịch vụ, thì dừng hai lần: sau Plan (để không đốt token vào hướng sai) và trước Ship (xem ADR 0012). Loop Run không bắt đầu nếu chưa đặt Budget. Lý do: chạy hàng giờ không ai canh chỉ an toàn khi chỗ nguy hiểm nhất luôn chờ người, và chi phí không thể tự phình ra.
+A Loop Run goes from Spec to PR by itself without waiting for plan approval; the agent settles the Tier and Prior Art itself and records them in the Decision Log, and when finished leaves a Run Report for the user to read or ask about later. Questions that come up are gathered into a Question Batch, and minor matters are decided by the agent and recorded in the Decision Log. Blocking errors from the Reviewer are fixed automatically at most twice, then the run skips to another independent Task. Normal changes are pushed to a PR but not merged; a change touching a Sensitive Area, or needing the user to act on a service, stops twice: after Plan (to avoid burning tokens in the wrong direction) and before Ship (see ADR 0012). A Loop Run doesn't start without a Budget. Reason: running for hours unattended is safe only when the most dangerous places always wait for a person, and cost can't be allowed to grow by itself.

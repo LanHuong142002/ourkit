@@ -1,8 +1,8 @@
-# Core không bao giờ giả định công nghệ
+# Core never assumes a technology
 
-Core không được hard-code bất kỳ ngôn ngữ, framework, lệnh hay cấu trúc thư mục nào; mọi thông tin phụ thuộc công nghệ đều được đọc từ Stack Profile của project (phát hiện tự động → người dùng xác nhận) và, nếu có, từ Stack Pack. Lý do: package phải áp được vào bất kỳ project nào, kể cả project trắng — một quy ước "tiện tay" kiểu "chạy `npm test`" trong Core sẽ âm thầm làm hỏng mọi project không phải Node.
+Core must not hard-code any language, framework, command or folder structure; all technology-dependent information is read from the project's Stack Profile (detected automatically, then confirmed by the user) and, if present, from a Stack Pack. Reason: the package must apply to any project, including a blank one, and a "convenient" convention like "run `npm test`" in Core would silently break every non-Node project.
 
 ## Consequences
 
-- Mọi Gate cần chạy lệnh (test, lint…) phải hỏi Stack Profile, và xử lý được trường hợp project chưa có lệnh đó.
-- Quy ước sâu cho một công nghệ chỉ được nằm trong Stack Pack, không bao giờ trong Core hay Role.
+- Every Gate that needs to run a command (test, lint...) must ask the Stack Profile and must handle a project that doesn't have that command yet.
+- Deep conventions for a technology may live only in a Stack Pack, never in Core or a Role.

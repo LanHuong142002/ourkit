@@ -1,200 +1,200 @@
 # ourkit
 
-Một package cài vào agent để dẫn mọi project — bất kể công nghệ — đi qua cùng một vòng đời phát triển phần mềm có kiểm soát.
+A package installed into an agent that guides every project, whatever its technology, through one controlled software development lifecycle.
 
 ## Language
 
-### Cấu trúc package
+### Package structure
 
 **Core**:
-Phần dùng chung cho mọi Role và mọi project; không chứa bất kỳ giả định nào về ngôn ngữ, framework hay hạ tầng.
+The part shared by every Role and every project; it contains no assumptions about language, framework or infrastructure.
 _Avoid_: common, base, shared
 
 **Role**:
-Một chuyên môn nguyên tử mà agent đảm nhận (vd frontend, backend), mang theo hướng dẫn và checklist riêng chồng lên Core; một project có thể bật nhiều Role cùng lúc.
+An atomic specialty the agent takes on (for example frontend, backend), carrying its own guidance and checklist layered over Core; a project can enable several Roles at once.
 _Avoid_: persona, mode, profile
 
 **Full-stack**:
-Tên gọi cho việc bật đồng thời Role frontend và Role backend — không phải một Role riêng.
+The name for enabling the frontend Role and the backend Role together; it is not a separate Role.
 _Avoid_: fullstack role
 
 **Stack Pack**:
-Gói tùy chọn cài thêm, chứa quy ước sâu cho một công nghệ cụ thể; Core vẫn chạy đủ khi không có Stack Pack nào.
+An optional add-on containing deep conventions for one specific technology; Core still runs fully with no Stack Pack.
 _Avoid_: plugin, adapter, preset
 
 **Host**:
-Agent mà kit chạy trên đó (Claude Code là Host đầu tiên).
-_Avoid_: platform, target, agent (khi nói về nơi cài)
+The agent the kit runs on (Claude Code is the first Host).
+_Avoid_: platform, target, agent (when referring to where the kit is installed)
 
 **Host Shell**:
-Lớp mỏng riêng cho từng Host — manifest, hook, đường dẫn cài đặt, cách gọi subagent — bọc quanh nội dung Stage dùng chung; muốn thêm Host thì chỉ viết Host Shell mới.
-_Avoid_: adapter, wrapper, vỏ
+The thin layer specific to each Host (manifest, hooks, install paths, how subagents are called) wrapped around the shared Stage content; adding a Host only requires writing a new Host Shell.
+_Avoid_: adapter, wrapper
 
 **Contract Check**:
-Lệnh kiểm tra tự động một điểm mở rộng (Host Shell, Role, Stack Pack, Stage) đã thỏa đủ hợp đồng của nó hay chưa.
+A command that automatically verifies whether an extension point (Host Shell, Role, Stack Pack, Stage) fully satisfies its contract.
 _Avoid_: validation, lint
 
 **Fixture Project**:
-Project mẫu đi kèm kit (vd một Node, một Python, một API-only) để chạy thử kit và Contract Check — không phải project của người dùng.
+A project shipped with the kit (for example one Node, one Python, one API-only) for trying out the kit and Contract Check; it is not a user's project.
 _Avoid_: sample, demo project
 
 **Tracker**:
-Nơi chứa ticket của project (v1: GitHub Issues). Kit đọc ticket làm đầu vào cho Spec, và tự cập nhật trạng thái, comment link PR kèm tóm tắt Change Report.
+Where a project's tickets live (v1: GitHub Issues). The kit reads tickets as input for Spec, updates their status itself, and comments with a PR link and the Change Report summary.
 _Avoid_: issue tracker, board, backlog tool
 
 **Tracker Pack**:
-Gói tùy chọn nối Core với một Tracker cụ thể qua hợp đồng 4 việc: đọc ticket, đổi trạng thái, comment, gắn link PR; dùng MCP nếu có, không thì CLI.
+An optional pack connecting Core to a specific Tracker through a contract of four operations: read a ticket, change status, comment, attach a PR link; it uses MCP when available and otherwise a CLI.
 _Avoid_: integration
 
 **Connector**:
-Kết nối MCP tới một dịch vụ bên ngoài (vd GitHub, Vercel, Notion). Init tự cấu hình phần làm được — không bao giờ ghi token vào repo — và với phần cần người dùng (đăng nhập, tạo token) thì đưa hướng dẫn từng bước. Chỉ được bật khi project thật sự cần, để không tốn ngữ cảnh. Việc chưa xong được lưu lại và nhắc bằng một dòng ở lần chạy sau.
-_Avoid_: integration, plugin, MCP (khi nói về một kết nối cụ thể)
+An MCP connection to an external service (for example GitHub, Vercel, Notion). Init configures what it can by itself, never writing a token to the repo, and gives step-by-step guidance for what needs the user (signing in, creating a token). A Connector is enabled only when the project really needs it, to save context. Unfinished work is saved and raised in one line on the next run.
+_Avoid_: integration, plugin, MCP (when referring to a specific connection)
 
 **Release**:
-Một lần phát hành có đánh số của chính package (v1, v2…).
-_Avoid_: phase, milestone, version (khi nói về đợt phát triển)
+A numbered release of the package itself (v1, v2...).
+_Avoid_: phase, milestone, version (when referring to a development round)
 
-### Vòng đời
+### Lifecycle
 
 **Stage**:
-Một bước trong vòng đời của một thay đổi; v1 gồm Spec → Plan → Tasks → Build (code + test) → Review → Ship, cộng luồng Bug-fix. Deploy có sẵn khung ở v1 và được làm đầy ở Release 2.
+One step in the lifecycle of a change; v1 has Spec → Plan → Tasks → Build (code + test) → Review → Ship, plus the Bug-fix flow. Deploy ships as a frame in v1 and is filled in Release 2.
 _Avoid_: phase, step
 
 **Mode**:
-Cách người dùng làm việc với agent cho một thay đổi: Pair hoặc Hands-off. Gần như mọi Gate hành xử khác nhau theo Mode; mặc định là Pair.
+How the user works with the agent on a change: Pair or Hands-off. Almost every Gate behaves differently by Mode; the default is Pair.
 _Avoid_: flow, style
 
 **Pair**:
-Mode người dùng ngồi cùng agent: Gate hỏi ngay, người dùng duyệt plan, Explainer được gợi ý.
+The Mode where the user sits with the agent: Gates ask immediately, the user approves the plan, and the Explainer is suggested.
 _Avoid_: interactive, manual
 
 **Hands-off**:
-Mode agent tự làm rồi báo cáo: tự chốt quyết định và ghi Decision Log, gom câu hỏi vào Question Batch; với thay đổi chạm Sensitive Area hoặc cần người dùng thao tác trên dịch vụ thì dừng hai lần — sau Plan và trước Ship.
+The Mode where the agent works by itself and then reports: it settles decisions and records them in the Decision Log, and gathers questions into a Question Batch; for a change that touches a Sensitive Area or needs the user to act on a service, it stops twice, after Plan and before Ship.
 _Avoid_: autopilot, autonomous, solo
 
 **Loop Run**:
-Hands-off chạy theo chu kỳ trên nhiều ticket (có thể cả backlog), mỗi ticket một ngữ cảnh mới; tự dừng khi bị chặn hết, xong việc, hoặc hết Budget.
+Hands-off running in cycles over multiple tickets (possibly a whole backlog), with a fresh context for each ticket; it stops by itself when everything is blocked, the work is done, or the Budget runs out.
 _Avoid_: batch mode, background run
 
 **Budget**:
-Giới hạn giờ chạy hoặc ước lượng token đặt trước cho một Loop Run; không có Budget thì Loop Run không bắt đầu. Nếu Host cho đọc mức sử dụng của gói, Loop Run còn dừng nhận ticket mới khi gần chạm limit, cảnh báo người dùng, và tự chạy tiếp khi limit được làm mới (nếu Host cho hẹn giờ).
+A limit on running hours or estimated tokens set in advance for a Loop Run; without a Budget, a Loop Run does not start. If the Host can read plan usage, a Loop Run also stops taking new tickets when close to the limit, warns the user, and continues by itself when the limit refreshes (if the Host can schedule).
 _Avoid_: quota, limit, cap
 
 **Question Batch**:
-Các câu hỏi cần người dùng quyết định, được gom lại để hỏi một lần thay vì dừng lại hỏi từng câu.
+Questions that need the user's decision, gathered to be asked at once instead of stopping for each one.
 _Avoid_: blockers, pending questions
 
 **Run Report**:
-Bản tổng kết sau một Loop Run: đã xong gì, Decision Log, Question Batch, Test Handoff, và những thay đổi đang chờ người dùng. Người dùng đọc lại hoặc hỏi lại flow từ đây.
+The summary after a Loop Run: what was finished, the Decision Log, the Question Batch, the Test Handoff, and the changes waiting for the user. The user reads the flow back or asks about it from here.
 _Avoid_: summary, run log
 
 **Gate**:
-Điểm kiểm tra giữa hai Stage; mức độ nghiêm (chặn hay chỉ nhắc) phụ thuộc vào Tier của thay đổi.
+A control point between two Stages; its severity (blocking or only reminding) depends on the Tier of the change.
 _Avoid_: check, guard, checkpoint
 
 **Tier**:
-Cỡ của một thay đổi — Patch, Feature hoặc Epic — quyết định nó phải đi qua những Stage và Gate nào; agent đề xuất Tier kèm lý do, người dùng xác nhận.
+The size of a change (Patch, Feature or Epic), which decides the Stages and Gates it must pass through; the agent proposes a Tier with a reason and the user confirms.
 _Avoid_: size, level, mode
 
 **Patch**:
-Tier nhỏ nhất: chỉ đi Build và Review. Ở Pair, Patch kết thúc sau Review và người dùng tự commit; ở Hands-off, agent mở PR.
+The smallest Tier: it only goes through Build and Review. In Pair, a Patch ends after Review and the user commits it; in Hands-off, the agent opens a PR.
 
 **Feature**:
-Tier đi đủ mọi Stage.
+The Tier that goes through every Stage.
 
 **Epic**:
-Tier cho thay đổi quá lớn cho một vòng: được grill trước và chia thành nhiều Feature.
+The Tier for a change too large for one cycle: it is grilled first and split into multiple Features.
 
 **Active Change**:
-Thay đổi mà người dùng đang làm, được kit tự suy ra từ nhánh hiện tại; nếu không suy ra được (vd Patch không tạo nhánh) thì là phần chưa commit cùng commit gần nhất. Nhờ vậy các lệnh không cần tham số.
+The change the user is working on, inferred by the kit from the current branch; if that isn't possible (for example a Patch with no branch), it is the uncommitted work plus the latest commit. This is why commands need no arguments.
 _Avoid_: current feature, selected change
 
 **Bug-fix**:
-Luồng riêng cho sửa lỗi, gồm các Stage Reproduce → Fix → Verify; vẫn chịu luật Tier như mọi thay đổi khác.
+The separate flow for fixing bugs, with the Stages Reproduce → Fix → Verify; it is still subject to Tier rules like every other change.
 _Avoid_: hotfix flow, bug flow
 
 **Reviewer**:
-Subagent chấm một thay đổi trong ngữ cảnh mới — chỉ thấy spec, diff và checklist, không thấy quá trình làm. Feature có một Reviewer đọc checklist của mọi Role đang bật; chạm Sensitive Area thì thêm một Reviewer riêng chỉ soi vùng đó; Patch thì phiên chính tự review. Mỗi phát hiện là blocking hoặc non-blocking.
+A subagent that judges a change in a fresh context, seeing only the spec, the diff and the checklists, not how the work was done. A Feature has one Reviewer reading the checklists of every enabled Role; touching a Sensitive Area adds a separate Reviewer that examines only that area; for a Patch, the main session reviews its own work. Each finding is blocking or non-blocking.
 _Avoid_: code reviewer, checker, linter
 
 **Explainer**:
-Subagent (gọi bằng lệnh `huh`) giúp người dùng hiểu một thay đổi cho tới khi nắm rõ: mở đầu bằng tóm tắt 3 câu, trả lời bằng cách chỉ vào code thật, và kết thúc bằng Teach-back. Khác với clarify (agent hỏi để làm rõ spec), Explainer làm rõ cho người dùng.
+A subagent (called with the `huh` command) that helps the user understand a change until they grasp it: it opens with a three-sentence summary, answers by pointing at real code, and ends with Teach-back. Unlike clarify (the agent asks questions to make the spec clear), the Explainer makes things clear for the user.
 _Avoid_: walkthrough, briefing, tutor
 
 **Teach-back**:
-Vài câu hỏi Explainer đặt ra cuối phiên để kiểm tra người dùng thật sự hiểu thay đổi; câu nào trả lời sai thì được giải thích lại và ghi vào Change Report.
-_Avoid_: quiz, test (khi nói về người dùng)
+A few questions the Explainer asks at the end of a session to verify the user really understands the change; wrong answers are explained again and recorded in the Change Report.
+_Avoid_: quiz, test (when referring to the user)
 
 **Sensitive Area**:
-Phần của hệ thống mà mọi thay đổi chạm vào đều ít nhất là Feature, dù chỉ một dòng: auth/phân quyền, dữ liệu, schema, tiền, API public.
+A part of the system where any change touching it is at least a Feature, even for one line: auth and permissions, data, schema, money, public API.
 _Avoid_: critical path, risky code
 
 **Prior Art**:
-Giải pháp đã có sẵn — trong chính project, trong thư viện hoặc công cụ chính thức — mà agent phải tìm và cân nhắc ở Stage Plan trước khi tự viết mới; kết luận (dùng lại, hoặc viết mới kèm lý do) được ghi vào plan, và vào Decision Log nếu ở Hands-off.
+Solutions that already exist, in the project itself or in official libraries or tools, which the agent must look for and consider at the Plan Stage before writing anything new; the conclusion (reuse, or write new with a reason) is recorded in the plan, and in the Decision Log when in Hands-off.
 _Avoid_: research, references
 
-### Cài đặt
+### Installation
 
 **Installer**:
-Công cụ dòng lệnh ở terminal, chạy trước khi mở agent: hỏi Greenfield hay Brownfield, chọn Role, chép kit vào project và phát hiện sơ bộ stack. Không suy luận gì.
-_Avoid_: CLI (khi nói chung chung), setup script
+The command-line tool run in the terminal before opening the agent: it asks Greenfield or Brownfield, selects Roles, copies the kit into the project and does preliminary stack detection. It does no inference.
+_Avoid_: CLI (when speaking generally), setup script
 
 **Init**:
-Bước chạy bên trong agent ngay sau Installer: agent đọc project thật, đề xuất Stack Profile và hoàn tất lối vào tương ứng.
+The step run inside the agent right after the Installer: the agent reads the real project, proposes a Stack Profile and completes the matching entry path.
 _Avoid_: onboarding command, bootstrap
 
 **Greenfield**:
-Lối vào cho project chưa có code: chọn stack, tạo Stack Profile, dựng khung bằng công cụ tạo project chính thức của stack đó.
+The entry path for a project with no code yet: choose a stack, create the Stack Profile, and scaffold with that stack's official project creation tool.
 _Avoid_: new project, blank project
 
 **Brownfield**:
-Lối vào cho project đã có code: quét code, đề xuất Stack Profile, viết nháp glossary từ code hiện có và ghi nhận Baseline.
+The entry path for a project that already has code: scan the code, propose a Stack Profile, draft a glossary from the existing code and record the Baseline.
 _Avoid_: existing project, legacy project
 
-### Ghi chép
+### Records
 
 **Ticket Standard**:
-Mẫu chuẩn cho ticket (Summary, Title, User Story, Context, Scope Boundary, Links & References) và PR, phải đạt 4C: Correct, Clear, Complete, Concise. Dùng cho ticket kit tạo, nội dung PR, và để kiểm tra ticket trước khi nhận làm.
+The standard shape for tickets (Summary, Title, User Story, Context, Scope Boundary, Links & References) and PRs, which must meet 4C: Correct, Clear, Complete, Concise. It is used for tickets the kit creates, PR content, and assessing a ticket before work starts.
 _Avoid_: template, ticket format
 
 **Decision Log**:
-Danh sách những quyết định lặt vặt agent tự chốt trong lúc chạy (kèm lý do một câu) để người dùng xem lại sau, thay vì dừng lại hỏi.
+The list of minor decisions the agent settled by itself while running (with a one-sentence reason), for the user to review later instead of stopping to ask.
 _Avoid_: notes, assumptions
 
 **Test Handoff**:
-Phần việc agent không tự kiểm được và giao lại cho người dùng test, luôn kèm hướng dẫn test từng bước; agent chỉ báo lại phần này, còn lại tự xử lý.
+The work the agent can't verify by itself and hands to the user to test, always with step-by-step test instructions; the agent reports only this part and handles the rest itself.
 _Avoid_: manual QA, todo for user
 
 **Change Report**:
-Báo cáo của một Feature, Epic, hoặc Bug-fix chạm Sensitive Area: 5 dòng tóm tắt ở đầu, chi tiết bên dưới; Patch không có Change Report.
+The report for a Feature, an Epic, or a Bug-fix touching a Sensitive Area: a five-line summary on top with details below; a Patch has no Change Report.
 _Avoid_: report, summary, release notes
 
 **Project Log**:
-Mục lục lịch sử của cả project: mỗi lần Ship một thay đổi có Change Report thì thêm một dòng (ngày, tên, Tier, một câu tóm tắt, link).
+The history index of the whole project: each Ship of a change with a Change Report adds one line (date, name, Tier, one-sentence summary, link).
 _Avoid_: changelog, history
 
 **Lessons**:
-Bài học ngắn agent tự rút ra sau mỗi Change Report — về chi phí (vd Stage nào tốn bất thường) và chất lượng (lỗi Reviewer hay bắt lại, câu Teach-back hay sai) — được đọc lại ở đầu mỗi Stage Plan; tối đa khoảng 30 dòng, dòng cũ tự bị bỏ.
+Short lessons the agent derives by itself after each Change Report, about cost (for example, a Stage that cost unusually much) and quality (errors Reviewers keep catching, Teach-back questions often missed), reread at the start of each Plan Stage; at most about 30 lines, with old lines dropped automatically.
 _Avoid_: memory, notes, retro
 
-### Theo từng project
+### Per project
 
 **Stack Profile**:
-Bản khai báo công nghệ và các lệnh (test, lint, build, run) của một project — được phát hiện tự động rồi người dùng xác nhận; với project trắng thì được đề xuất cho người dùng chọn.
+The declaration of a project's technology and commands (test, lint, build, run), detected automatically and then confirmed by the user; for a blank project, it is proposed for the user to choose.
 _Avoid_: config, stack config, settings
 
 **Project Rules**:
-Luật riêng của một project, đè lên Core → Role → Stack Pack theo đúng thứ tự đó; là "constitution" của project.
+A project's own rules, which take precedence over Core → Role → Stack Pack in exactly that order; they are the project's "constitution".
 _Avoid_: constitution, project config, custom rules
 
 **Project Role**:
-Role do người dùng tự định nghĩa cho riêng một project, nằm cùng Project Rules, theo đúng hợp đồng như Role của kit.
+A Role the user defines for one project, living alongside Project Rules and following the same contract as the kit's Roles.
 _Avoid_: custom role, local role
 
 **Override**:
-Bản tùy biến của một file kit, đặt riêng trong project và được ưu tiên hơn file gốc; file kit không bao giờ bị sửa tay nên `upgrade` không làm mất Override.
+A customized version of a kit file, kept separately in the project and taking priority over the original; kit files are never edited by hand, so `upgrade` doesn't lose an Override.
 _Avoid_: patch, customization, fork
 
 **Baseline**:
-Trạng thái của code tại thời điểm kit được cài vào một project Brownfield; Gate chỉ áp chuẩn lên phần thay đổi so với Baseline, không lên code cũ.
+The state of the code at the moment the kit is installed into a Brownfield project; Gates apply standards only to what changed since the Baseline, not to old code.
 _Avoid_: legacy, snapshot, grandfathered code

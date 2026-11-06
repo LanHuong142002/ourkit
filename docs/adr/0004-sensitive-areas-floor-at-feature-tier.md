@@ -1,3 +1,3 @@
-# Thay đổi chạm Sensitive Area luôn ít nhất là Feature
+# A change touching a Sensitive Area is always at least a Feature
 
-Agent đề xuất Tier và người dùng xác nhận, nhưng có một sàn cứng: mọi thay đổi chạm vào auth/phân quyền, dữ liệu, schema, tiền hoặc API public đều tối thiểu là Feature, kể cả khi chỉ sửa một dòng, và người dùng không hạ xuống Patch được. Lý do: đây chính là những chỗ mà lỗi "quên tính tới" gây hậu quả lớn nhất, trong khi cảm giác "chỉ là sửa nhỏ" lại hay xuất hiện nhất.
+The agent proposes a Tier and the user confirms it, but there is a hard floor: any change touching auth or permissions, data, schema, money or public API is at least a Feature, even for a single line, and the user cannot lower it to Patch. Reason: these are exactly the places where a "forgot to consider that" mistake has the largest consequences, and also where the feeling of "it's only a small fix" appears most often.
