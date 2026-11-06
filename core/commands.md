@@ -8,6 +8,7 @@ node .ourkit/kit/bin/ourkit.js <subcommand>
 
 | Subcommand | Purpose |
 |---|---|
+| `active-change` | Print the Active Change as JSON |
 | `command <name>` | Look up a command in the Stack Profile |
 | `rules` | Print every rule in layering order |
 | `check --project` | Verify Project Roles, Overrides and Connectors |
