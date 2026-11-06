@@ -3,7 +3,7 @@
 Rules apply in this order, and a later layer wins when rules conflict:
 
 1. Core: `.ourkit/kit/core/`
-2. Role: `.ourkit/kit/roles/<role>/`
+2. Role: `.ourkit/kit/roles/<role>/`, then Project Roles in `.ourkit/roles/<role>/`
 3. Stack Pack: `.ourkit/kit/stack-packs/<pack>/`
 4. Project Rules: `.ourkit/rules.md`
 
