@@ -28,6 +28,9 @@ The Mode decides what happens next:
 
 A `status` of `not-run` means nothing was verified. Report it as not run, never as passed, and never guess a replacement command. Deploying is never a Gate command (ADR 0010).
 
+- `ourkit gate approval` checks that Build may start. In Pair, the user must have approved this exact plan. Hands-off passes.
+- `ourkit gate approve-plan` records the approval. Run it only after the user has said they approve. Never run it on their behalf or because they went quiet. Changing the plan afterwards makes it need approving again.
+
 ## Judge only the change
 
 Apply standards only to the files in `gate scope`, not to older code (ADR 0006). When a project has a Baseline, a branch started before it is compared from the Baseline.
