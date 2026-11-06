@@ -6,6 +6,7 @@ const subcommands = {
   baseline: () => require('../src/baseline').main(args[0]),
   check: () => require('../src/contract-check').main(args[0], args[1]),
   command: () => require('../src/stack-profile').main(args[0], args[1]),
+  review: () => require('../src/review').main(args),
   rules: () => require('../src/rules').main(args[0]),
   pending: () => require('../src/connectors').main(args),
   pack: () => require('../src/stack-pack').main(args[0], args[1], args[2]),

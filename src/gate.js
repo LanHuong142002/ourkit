@@ -132,6 +132,9 @@ function main(args) {
     result = floorGate(record, scope);
   } else if (action === 'artifact' && Object.hasOwn(ARTIFACTS, name)) {
     result = artifactGate(projectDir, record, change.id, name);
+  } else if (action === 'review') {
+    // Required here because src/review.js builds on this file.
+    result = require('./review').reviewGate(projectDir, record, change);
   } else if (action === 'approval') {
     result = approvalGate(projectDir, record, change.id);
   } else if (action === 'approve-plan') {
@@ -145,10 +148,12 @@ function main(args) {
     }
   } else {
     const documents = Object.keys(ARTIFACTS).join('|');
-    return fail(`usage: ourkit gate <scope | floor | approval | approve-plan | run <${RUNNABLE.join('|')}> | path <${documents}> | artifact <${documents}>>`);
+    return fail(`usage: ourkit gate <scope | floor | review | approval | approve-plan | run <${RUNNABLE.join('|')}> | path <${documents}> | artifact <${documents}>>`);
   }
   console.log(JSON.stringify(result, null, 2));
   return result.severity === 'block' ? 1 : 0;
 }
 
-module.exports = { decide, gateScope, main, severityFor };
+const actionFor = (severity, record) => ACTIONS[severity][modeOf(record)];
+
+module.exports = { actionFor, decide, gateScope, main, severityFor };
