@@ -73,16 +73,19 @@ function planFiles(projectDir, roles) {
   add('bin', path.join(KIT_DIR, 'bin'));
   add('src', path.join(KIT_DIR, 'src'));
   for (const role of roles) add(path.join('roles', role), path.join(KIT_DIR, 'roles', role));
-  // Host reads Stages directly from its own folder, so a Stage Override is applied here.
-  const stagesRoot = path.join(KIT_ROOT, 'stages');
-  for (const source of filesUnder(stagesRoot)) {
-    const relative = path.relative(stagesRoot, source);
-    const override = path.join(projectDir, OVERRIDES_DIR, 'stages', relative);
-    plan.push({
-      source: fs.existsSync(override) ? override : source,
-      target: path.join(shell.stagesDir, relative),
-    });
-  }
+  // The Host reads these directly from its own folders, so their Overrides are applied here.
+  const addForHost = (root, overrideFolder, toDir) => {
+    for (const source of filesUnder(root)) {
+      const relative = path.relative(root, source);
+      const override = path.join(projectDir, OVERRIDES_DIR, overrideFolder, relative);
+      plan.push({
+        source: fs.existsSync(override) ? override : source,
+        target: path.join(toDir, relative),
+      });
+    }
+  };
+  addForHost(path.join(KIT_ROOT, 'stages'), 'stages', shell.stagesDir);
+  addForHost(path.join(KIT_ROOT, 'hosts', HOST, 'agents'), 'agents', shell.agentsDir);
   return plan;
 }
 
