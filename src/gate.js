@@ -1,6 +1,7 @@
 // Gates: shared behaviour between Stages. Severity comes from the Tier, the action from the Mode.
 const { spawnSync } = require('child_process');
 const { activeChange } = require('./active-change');
+const { ARTIFACTS, checkArtifact, relativePathFor } = require('./artifacts');
 const { readBaseline } = require('./baseline');
 const { readChange } = require('./change-state');
 const { modeOf } = require('./mode');
@@ -78,6 +79,13 @@ function floorGate(record, scope) {
   return { status: 'fail', reason: `this change can't stay a Patch, because ${violation}`, severity: 'block', action: ACTIONS.block[modeOf(record)] };
 }
 
+// The next Stage can't start from a document that isn't complete, whatever the Tier.
+function artifactGate(projectDir, record, id, name) {
+  const problems = checkArtifact(projectDir, name, id);
+  if (problems.length === 0) return { status: 'pass', severity: 'none', action: 'continue' };
+  return { status: 'fail', problems, severity: 'block', action: ACTIONS.block[modeOf(record)] };
+}
+
 function main(args) {
   const [action, name] = args;
   const projectDir = process.cwd();
@@ -88,11 +96,17 @@ function main(args) {
     console.log(JSON.stringify(scope, null, 2));
     return 0;
   }
+  if (action === 'path' && Object.hasOwn(ARTIFACTS, name)) {
+    console.log(relativePathFor(name, change.id).replace(/\\/g, '/'));
+    return 0;
+  }
   const record = readChange(projectDir, change.id);
   if (!record.tier) return fail('set a Tier first, because it decides how strict a Gate is; see `ourkit tier`');
   let result;
   if (action === 'floor') {
     result = floorGate(record, scope);
+  } else if (action === 'artifact' && Object.hasOwn(ARTIFACTS, name)) {
+    result = artifactGate(projectDir, record, change.id, name);
   } else if (action === 'run' && RUNNABLE.includes(name)) {
     try {
       result = runGate(projectDir, record, name);
@@ -101,7 +115,8 @@ function main(args) {
       return fail(error.message);
     }
   } else {
-    return fail(`usage: ourkit gate <scope | floor | run <${RUNNABLE.join('|')}>>`);
+    const documents = Object.keys(ARTIFACTS).join('|');
+    return fail(`usage: ourkit gate <scope | floor | run <${RUNNABLE.join('|')}> | path <${documents}> | artifact <${documents}>>`);
   }
   console.log(JSON.stringify(result, null, 2));
   return result.severity === 'block' ? 1 : 0;
