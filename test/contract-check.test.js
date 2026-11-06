@@ -160,7 +160,7 @@ test('ignores stack terms outside Core and Stages', () => {
 test('command exits 0 and reports counts on a valid kit', () => {
   const result = spawnSync(process.execPath, [BIN, 'check', kit], { encoding: 'utf8' });
   assert.strictEqual(result.status, 0, result.stderr);
-  assert.match(result.stdout, /OK \(1 Stage\(s\), 1 Host Shell\(s\), 0 Role\(s\), 0 Stack Pack\(s\)\)/);
+  assert.match(result.stdout, /OK \(1 Stage\(s\), 1 Host Shell\(s\), 0 Role\(s\), 0 Stack Pack\(s\), 0 Tracker Pack\(s\)\)/);
 });
 
 test('command exits 1 and names the file on a broken kit', () => {

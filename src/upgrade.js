@@ -28,7 +28,7 @@ function inspect(projectDir) {
   const recordFile = path.join(projectDir, INSTALL_RECORD);
   if (!fs.existsSync(recordFile)) return { error: `ourkit is not installed in ${projectDir}; run the Installer first` };
   const record = JSON.parse(fs.readFileSync(recordFile, 'utf8'));
-  const plan = planFiles(projectDir, record.roles);
+  const plan = planFiles(projectDir, record.roles, record.tracker);
   const planned = new Set(plan.map(({ target }) => toRecordPath(target)));
 
   const edited = Object.entries(record.files)
@@ -66,7 +66,7 @@ function apply(projectDir, state, movable) {
   const { record, removed } = state;
   // Moving first means planFiles sees new Stage Overrides.
   for (const file of movable) moveToOverride(projectDir, file);
-  const plan = planFiles(projectDir, record.roles);
+  const plan = planFiles(projectDir, record.roles, record.tracker);
   for (const file of removed) {
     const absolute = path.join(projectDir, file);
     if (fs.existsSync(absolute)) fs.rmSync(absolute);

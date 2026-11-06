@@ -12,7 +12,8 @@
     "hosts",
     "roles",
     "src",
-    "stages"
+    "stages",
+    "tracker-packs"
   ],
   "scripts": {
     "test": "node --test"
