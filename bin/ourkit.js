@@ -7,6 +7,7 @@ const subcommands = {
   rules: () => require('../src/rules').main(args[0]),
   pack: () => require('../src/stack-pack').main(args[0], args[1], args[2]),
   ticket: () => require('../src/ticket-standard').main(args),
+  upgrade: () => require('../src/upgrade').main(args),
 };
 
 async function run() {
