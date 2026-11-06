@@ -134,6 +134,47 @@ function checkRole(root, rolesDir, role) {
   return problems;
 }
 
+// `folder` is relative to `root`, because a pack is also checked before installation.
+function checkStackPack(root, folder) {
+  const problems = [];
+  const report = (file, message) => problems.push({ file, contract: 'Stack Pack', message });
+  const pack = path.basename(path.resolve(root, folder));
+  const manifestPath = path.join(folder, 'pack.json');
+  const conventionsPath = path.join(folder, 'conventions.md');
+
+  if (!SKILL_NAME.test(pack)) report(folder, 'folder name must be lowercase words joined by single hyphens');
+  if (!fs.existsSync(path.join(root, conventionsPath))) {
+    report(folder, 'must contain conventions.md');
+  } else if (!readText(path.join(root, conventionsPath)).trim()) {
+    report(conventionsPath, 'must not be empty');
+  }
+  if (!fs.existsSync(path.join(root, manifestPath))) {
+    report(folder, 'must contain pack.json');
+    return problems;
+  }
+  let manifest;
+  try {
+    manifest = JSON.parse(readText(path.join(root, manifestPath)));
+  } catch (error) {
+    report(manifestPath, `must be valid JSON: ${error.message}`);
+    return problems;
+  }
+  if (manifest === null || typeof manifest !== 'object' || Array.isArray(manifest)) {
+    report(manifestPath, 'must be a JSON object');
+    return problems;
+  }
+  if (manifest.name !== pack) report(manifestPath, `name must match its folder "${pack}"`);
+  const { technologies } = manifest;
+  if (
+    !Array.isArray(technologies) ||
+    technologies.length === 0 ||
+    technologies.some((t) => typeof t !== 'string' || !t.trim())
+  ) {
+    report(manifestPath, 'technologies must list at least one name');
+  }
+  return problems;
+}
+
 function checkHostShell(root, host) {
   const shellPath = path.join('hosts', host, 'shell.json');
   const report = (message) => ({ file: shellPath, contract: 'Host Shell', message });
@@ -191,14 +232,16 @@ function runContractCheck(root) {
   const stages = subfolders(path.join(root, 'stages'));
   const hosts = subfolders(path.join(root, 'hosts'));
   const roles = subfolders(path.join(root, 'roles'));
+  const packs = subfolders(path.join(root, 'stack-packs'));
   const problems = [];
   if (stages.length === 0) problems.push({ file: 'stages', contract: 'Stage', message: 'must contain at least one Stage' });
   if (hosts.length === 0) problems.push({ file: 'hosts', contract: 'Host Shell', message: 'must contain at least one Host Shell' });
   for (const stage of stages) problems.push(...checkStage(root, stage));
   for (const host of hosts) problems.push(...checkHostShell(root, host));
   for (const role of roles) problems.push(...checkRole(root, 'roles', role));
+  for (const pack of packs) problems.push(...checkStackPack(root, path.join('stack-packs', pack)));
   problems.push(...checkStackNeutral(root));
-  return { problems, stages: stages.length, hosts: hosts.length, roles: roles.length };
+  return { problems, stages: stages.length, hosts: hosts.length, roles: roles.length, packs: packs.length };
 }
 
 // Project Roles aren't held to stack neutrality: they belong to one project, whose stack is known.
@@ -226,8 +269,8 @@ function main(firstArg, secondArg) {
     return report(problems, `${roles} Project Role(s)`);
   }
   const root = path.resolve(firstArg || path.join(__dirname, '..'));
-  const { problems, stages, hosts, roles } = runContractCheck(root);
-  return report(problems, `${stages} Stage(s), ${hosts} Host Shell(s), ${roles} Role(s)`);
+  const { problems, stages, hosts, roles, packs } = runContractCheck(root);
+  return report(problems, `${stages} Stage(s), ${hosts} Host Shell(s), ${roles} Role(s), ${packs} Stack Pack(s)`);
 }
 
-module.exports = { main, runContractCheck, runProjectCheck };
+module.exports = { checkStackPack, main, runContractCheck, runProjectCheck };

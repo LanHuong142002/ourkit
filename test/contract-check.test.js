@@ -152,14 +152,15 @@ for (const line of [
 }
 
 test('ignores stack terms outside Core and Stages', () => {
-  write('stack-packs/demo/guide.md', 'Run npm test.\n');
+  write('stack-packs/demo/pack.json', JSON.stringify({ name: 'demo', technologies: ['Demo'] }));
+  write('stack-packs/demo/conventions.md', 'Run npm test.\n');
   assert.deepStrictEqual(runContractCheck(kit).problems, []);
 });
 
 test('command exits 0 and reports counts on a valid kit', () => {
   const result = spawnSync(process.execPath, [BIN, 'check', kit], { encoding: 'utf8' });
   assert.strictEqual(result.status, 0, result.stderr);
-  assert.match(result.stdout, /OK \(1 Stage\(s\), 1 Host Shell\(s\), 0 Role\(s\)\)/);
+  assert.match(result.stdout, /OK \(1 Stage\(s\), 1 Host Shell\(s\), 0 Role\(s\), 0 Stack Pack\(s\)\)/);
 });
 
 test('command exits 1 and names the file on a broken kit', () => {
