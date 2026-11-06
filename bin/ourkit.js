@@ -4,6 +4,10 @@
 const fs = require('fs');
 const path = require('path');
 
+if (process.argv[2] === 'check') {
+  process.exit(require('../src/contract-check').main(process.argv[3]));
+}
+
 const KIT_ROOT = path.join(__dirname, '..');
 const projectDir = path.resolve(process.argv[2] || process.cwd());
 

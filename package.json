@@ -9,6 +9,7 @@
   "files": [
     "bin",
     "hosts",
+    "src",
     "stages"
   ],
   "scripts": {
