@@ -8,6 +8,10 @@ if (process.argv[2] === 'check') {
   process.exit(require('../src/contract-check').main(process.argv[3]));
 }
 
+if (process.argv[2] === 'command') {
+  process.exit(require('../src/stack-profile').main(process.argv[3], process.argv[4]));
+}
+
 const KIT_ROOT = path.join(__dirname, '..');
 const projectDir = path.resolve(process.argv[2] || process.cwd());
 
