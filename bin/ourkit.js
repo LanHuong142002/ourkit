@@ -13,6 +13,7 @@ const subcommands = {
   decision: () => require('../src/mode').decisionMain(args),
   mode: () => require('../src/mode').modeMain(args),
   question: () => require('../src/mode').questionMain(args),
+  task: () => require('../src/tasks').main(args),
   tier: () => require('../src/tier').main(args),
   ticket: () => require('../src/ticket-standard').main(args),
   upgrade: () => require('../src/upgrade').main(args),
