@@ -11,6 +11,7 @@ const DESCRIPTION_MAX = 1024;
 const STAGE_PREFIX = 'ourkit-';
 const FORBIDDEN_ROLES = ['fullstack', 'full-stack'];
 const MODEL_STRENGTHS = ['strong', 'balanced', 'cheap'];
+const TRACKER_OPERATIONS = ['Read a ticket', 'Change status', 'Comment', 'Attach a PR link'];
 const PROJECT_ROLES_DIR = path.join('.ourkit', 'roles');
 
 // ADR 0002: Core never assumes a stack. A list can't catch everything, so this
@@ -220,6 +221,41 @@ function checkHostAgents(root, host, shell) {
   return problems;
 }
 
+function checkTrackerPack(root, pack) {
+  const problems = [];
+  const report = (file, message) => problems.push({ file, contract: 'Tracker Pack', message });
+  const folder = path.join('tracker-packs', pack);
+  const manifestPath = path.join(folder, 'pack.json');
+  const operationsPath = path.join(folder, 'operations.md');
+
+  if (!SKILL_NAME.test(pack)) report(folder, 'folder name must be lowercase words joined by single hyphens');
+  if (!fs.existsSync(path.join(root, manifestPath))) {
+    report(folder, 'must contain pack.json');
+  } else {
+    let manifest = null;
+    try {
+      manifest = JSON.parse(readText(path.join(root, manifestPath)));
+    } catch (error) {
+      report(manifestPath, `must be valid JSON: ${error.message}`);
+    }
+    if (manifest !== null) {
+      if (manifest.name !== pack) report(manifestPath, `name must match its folder "${pack}"`);
+      if (typeof manifest.tracker !== 'string' || !manifest.tracker.trim()) report(manifestPath, 'tracker must name the Tracker');
+    }
+  }
+  if (!fs.existsSync(path.join(root, operationsPath))) {
+    report(folder, 'must contain operations.md');
+    return problems;
+  }
+  const text = readText(path.join(root, operationsPath));
+  for (const operation of TRACKER_OPERATIONS) {
+    const match = text.match(new RegExp(`^## ${operation}[ \\t]*\\n([\\s\\S]*?)(?=^## |(?![\\s\\S]))`, 'm'));
+    if (!match) report(operationsPath, `must have a "## ${operation}" section`);
+    else if (!match[1].trim()) report(operationsPath, `the "## ${operation}" section must not be empty`);
+  }
+  return problems;
+}
+
 function checkHostShell(root, host) {
   const shellPath = path.join('hosts', host, 'shell.json');
   const report = (message) => ({ file: shellPath, contract: 'Host Shell', message });
@@ -279,6 +315,7 @@ function runContractCheck(root) {
   const hosts = subfolders(path.join(root, 'hosts'));
   const roles = subfolders(path.join(root, 'roles'));
   const packs = subfolders(path.join(root, 'stack-packs'));
+  const trackers = subfolders(path.join(root, 'tracker-packs'));
   const problems = [];
   if (stages.length === 0) problems.push({ file: 'stages', contract: 'Stage', message: 'must contain at least one Stage' });
   if (hosts.length === 0) problems.push({ file: 'hosts', contract: 'Host Shell', message: 'must contain at least one Host Shell' });
@@ -286,8 +323,9 @@ function runContractCheck(root) {
   for (const host of hosts) problems.push(...checkHostShell(root, host));
   for (const role of roles) problems.push(...checkRole(root, 'roles', role));
   for (const pack of packs) problems.push(...checkStackPack(root, path.join('stack-packs', pack)));
+  for (const tracker of trackers) problems.push(...checkTrackerPack(root, tracker));
   problems.push(...checkStackNeutral(root));
-  return { problems, stages: stages.length, hosts: hosts.length, roles: roles.length, packs: packs.length };
+  return { problems, stages: stages.length, hosts: hosts.length, roles: roles.length, packs: packs.length, trackers: trackers.length };
 }
 
 // Project Roles aren't held to stack neutrality: they belong to one project, whose stack is known.
@@ -324,8 +362,8 @@ function main(firstArg, secondArg) {
     return report(problems, `${roles} Project Role(s)`);
   }
   const root = path.resolve(firstArg || path.join(__dirname, '..'));
-  const { problems, stages, hosts, roles, packs } = runContractCheck(root);
-  return report(problems, `${stages} Stage(s), ${hosts} Host Shell(s), ${roles} Role(s), ${packs} Stack Pack(s)`);
+  const { problems, stages, hosts, roles, packs, trackers } = runContractCheck(root);
+  return report(problems, `${stages} Stage(s), ${hosts} Host Shell(s), ${roles} Role(s), ${packs} Stack Pack(s), ${trackers} Tracker Pack(s)`);
 }
 
 module.exports = { checkStackPack, main, runContractCheck, runProjectCheck };

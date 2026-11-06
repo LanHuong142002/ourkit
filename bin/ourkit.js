@@ -21,6 +21,7 @@ const subcommands = {
   teachback: () => require('../src/teachback').main(args),
   tier: () => require('../src/tier').main(args),
   ticket: () => require('../src/ticket-standard').main(args),
+  tracker: () => require('../src/tracker').main(args),
   upgrade: () => require('../src/upgrade').main(args),
 };
 

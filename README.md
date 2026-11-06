@@ -11,6 +11,7 @@ Run these from the project's folder. The repo is private, so the machine needs a
 ```
 npx github:LanHuong142002/ourkit
 npx github:LanHuong142002/ourkit upgrade
+npx github:LanHuong142002/ourkit tracker add github
 ```
 
 ## Repo layout
@@ -22,6 +23,7 @@ npx github:LanHuong142002/ourkit upgrade
 | `core/` | Core |
 | `roles/` | Roles |
 | `stack-packs/` | Stack Packs |
+| `tracker-packs/` | Tracker Packs |
 | `stages/` | Stages, each a standard Agent Skills folder |
 | `hosts/<host>/` | The Host Shell for each Host |
 | `fixtures/` | Fixture Projects |

@@ -60,8 +60,28 @@ function hasProjectCode(projectDir) {
   return fs.readdirSync(projectDir).some((name) => !NOT_PROJECT_CODE.includes(name));
 }
 
+function trackerPlan(name) {
+  const root = path.join(KIT_ROOT, 'tracker-packs', name);
+  return filesUnder(root).map((source) => ({
+    source,
+    target: path.join(KIT_DIR, 'tracker-packs', name, path.relative(root, source)),
+  }));
+}
+
+// Copies files into the project, returning their hashes for the install record.
+function copyPlanned(projectDir, plan) {
+  const files = {};
+  for (const { source, target } of plan) {
+    const destination = path.join(projectDir, target);
+    fs.mkdirSync(path.dirname(destination), { recursive: true });
+    fs.copyFileSync(source, destination);
+    files[toRecordPath(target)] = hashFile(destination);
+  }
+  return files;
+}
+
 // Every file the kit puts in a project, as { source, target } with target relative to the project.
-function planFiles(projectDir, roles) {
+function planFiles(projectDir, roles, tracker) {
   const shell = JSON.parse(fs.readFileSync(path.join(KIT_ROOT, 'hosts', HOST, 'shell.json'), 'utf8'));
   const plan = [];
   const add = (from, toDir) => {
@@ -73,6 +93,7 @@ function planFiles(projectDir, roles) {
   add('bin', path.join(KIT_DIR, 'bin'));
   add('src', path.join(KIT_DIR, 'src'));
   for (const role of roles) add(path.join('roles', role), path.join(KIT_DIR, 'roles', role));
+  if (tracker) plan.push(...trackerPlan(tracker));
   // The Host reads these directly from its own folders, so their Overrides are applied here.
   const addForHost = (root, overrideFolder, toDir) => {
     for (const source of filesUnder(root)) {
@@ -100,13 +121,7 @@ function install(projectDir, { entry, roles }) {
     return { error: `ourkit is already installed in ${projectDir}, or these files are in the way: ${names}` };
   }
   const detected = STACK_MARKERS.filter((name) => fs.existsSync(path.join(projectDir, name)));
-  const files = {};
-  for (const { source, target } of plan) {
-    const destination = path.join(projectDir, target);
-    fs.mkdirSync(path.dirname(destination), { recursive: true });
-    fs.copyFileSync(source, destination);
-    files[toRecordPath(target)] = hashFile(destination);
-  }
+  const files = copyPlanned(projectDir, plan);
   const { version } = JSON.parse(fs.readFileSync(path.join(KIT_ROOT, 'package.json'), 'utf8'));
   const record = { version, host: HOST, entry, roles, detected, files };
   fs.writeFileSync(path.join(projectDir, INSTALL_RECORD), `${JSON.stringify(record, null, 2)}\n`);
@@ -179,4 +194,4 @@ async function main(args) {
   return 0;
 }
 
-module.exports = { INSTALL_RECORD, hashFile, install, main, parseRoles, planFiles };
+module.exports = { INSTALL_RECORD, KIT_ROOT, copyPlanned, hashFile, install, main, parseRoles, planFiles, trackerPlan };
