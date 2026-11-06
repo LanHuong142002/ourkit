@@ -76,9 +76,20 @@ test('command reports success and failure', () => {
   assert.match(ok.stdout, /Baseline recorded at [0-9a-f]{40}/);
 });
 
-test('Init is installed with the kit and follows the Brownfield path', () => {
-  const stage = fs.readFileSync(path.join(KIT_ROOT, 'stages', 'ourkit-init', 'SKILL.md'), 'utf8');
+const initStage = () => fs.readFileSync(path.join(KIT_ROOT, 'stages', 'ourkit-init', 'SKILL.md'), 'utf8').replace(/\r\n/g, '\n');
+const section = (name) => initStage().split(`## ${name}\n`)[1].split('\n## ')[0];
+
+test('the Brownfield path records a Baseline and never guesses commands', () => {
+  const brownfield = section('Brownfield');
   for (const required of ['stack-profile.json', 'glossary.md', 'ourkit baseline', 'Never guess', 'Wait for the user']) {
-    assert.ok(stage.includes(required), required);
+    assert.ok(brownfield.includes(required), required);
   }
+});
+
+test('the Greenfield path confirms before scaffolding and records no Baseline', () => {
+  const greenfield = section('Greenfield');
+  for (const required of ['official creation tool', 'wait for confirmation', 'stack-profile.json', 'has no Baseline']) {
+    assert.ok(greenfield.includes(required), required);
+  }
+  assert.ok(!greenfield.includes('ourkit baseline'));
 });

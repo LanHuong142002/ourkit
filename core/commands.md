@@ -10,7 +10,9 @@ node .ourkit/kit/bin/ourkit.js <subcommand>
 |---|---|
 | `command <name>` | Look up a command in the Stack Profile |
 | `rules` | Print every rule in layering order |
-| `check --project` | Verify Project Roles and Overrides |
+| `check --project` | Verify Project Roles, Overrides and Connectors |
+| `pending` | Print setup work still waiting for the user, in one line |
+| `pending add "<text>"`, `pending done <id>` | Save or finish a waiting item |
 | `ticket <body-file> --title "<title>" [--pr]` | Assess a ticket or PR against the Ticket Standard |
 | `pack add <pack-folder>` | Install a Stack Pack |
 | `baseline` | Record the Baseline of a Brownfield project, once |
