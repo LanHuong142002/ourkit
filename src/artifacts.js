@@ -4,6 +4,7 @@ const path = require('path');
 
 const ARTIFACTS = {
   spec: { folder: 'specs', sections: ['Goal', 'Requirements', 'Acceptance Criteria', 'Out of Scope', 'Open Questions'] },
+  plan: { folder: 'plans', sections: ['Approach', 'Prior Art', 'Changes', 'Risks', 'Test Strategy'] },
 };
 
 const relativePathFor = (name, id) =>
