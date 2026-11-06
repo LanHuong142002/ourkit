@@ -13,6 +13,7 @@ const subcommands = {
   flow: () => require('../src/mode').flowMain(args),
   gate: () => require('../src/gate').main(args),
   decision: () => require('../src/mode').decisionMain(args),
+  handsoff: () => require('../src/handsoff').main(args),
   intake: () => require('../src/intake').main(args),
   lessons: () => require('../src/lessons').main(args),
   log: () => require('../src/report').main(args),

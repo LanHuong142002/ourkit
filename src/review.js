@@ -126,4 +126,4 @@ function main(args) {
   return fail('usage: ourkit review <packet | list | add <blocking|non-blocking> "<finding>" | resolve <id> | complete>');
 }
 
-module.exports = { main, reviewGate };
+module.exports = { fingerprint, main, reviewGate };
