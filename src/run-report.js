@@ -56,6 +56,9 @@ function buildReport(projectDir, loop) {
     `**Stopped:** ${loop.stopped}. ${STOP_MEANINGS[loop.stopped] || ''}`.trim(),
     `**Used:** ${hours} hours and ${loop.usedTokens} tokens, of a Budget of ${JSON.stringify(loop.budget)}.`,
     ...(loop.lastError ? [`**Last error:** ${loop.lastError}`] : []),
+    ...(loop.stopped === 'waiting-for-limit' && loop.limit
+      ? [`**Usage limit:** the ${loop.limit.name} limit refreshes at ${loop.limit.resetsAt ? new Date(loop.limit.resetsAt * 1000).toISOString() : 'an unknown time'}. Run \`ourkit loop run\` after that to continue.`]
+      : []),
     '',
     '## Waiting for you',
     '',

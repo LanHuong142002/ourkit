@@ -13,6 +13,22 @@ const respond = (result, extra = {}) => {
 };
 const SUMMARY = ['one', 'two', 'three', 'four', 'five', 'six'].map((word) => `${word} about ${item}`).join('\n');
 
+// Reports plan usage the way the Host's stream does, around an ordinary finished ticket.
+const rateEvent = (utilization, resetsAt, status = 'allowed') => console.log(JSON.stringify({
+  type: 'rate_limit_event',
+  rate_limit_info: { status, resetsAt, rateLimitType: 'five_hour', unifiedWindows: { five_hour: { utilization, resetsAt, status }, seven_day: { utilization: 0.1, resetsAt: resetsAt + 999999, status: 'allowed' } } },
+}));
+const inSeconds = (seconds) => Math.floor(Date.now() / 1000) + seconds;
+if (item.includes('usagelow')) rateEvent(0.2, inSeconds(3600));
+if (item.includes('usagehigh')) rateEvent(0.95, inSeconds(3600));
+if (item.includes('usagesoon')) rateEvent(0.95, inSeconds(-59));
+if (item.includes('usagefar')) rateEvent(0.95, inSeconds(9 * 3600));
+if (item.includes('usagerefused')) {
+  rateEvent(1, inSeconds(3600), 'rejected');
+  console.log(JSON.stringify({ type: 'result', result: 'You have hit your limit', is_error: true, usage: {} }));
+  process.exit(1);
+}
+
 if (item.includes('crash')) {
   console.error('limit reached');
   process.exit(1);

@@ -10,6 +10,10 @@ const SHELL_PATH = path.join('.ourkit', 'kit', 'host', 'shell.json');
 const CARRIED = [path.join('.ourkit', 'lessons.md'), path.join('.ourkit', 'project-log.md')];
 const SUMMARY_LINES = 5;
 const OUTCOMES = ['shipped', 'stopped', 'blocked', 'rejected'];
+const LIMIT_THRESHOLD = 0.9;
+const WAIT_MARGIN_MS = 60 * 1000;
+// A seven-day window can be days away. A process shouldn't sit waiting that long, so it stops instead.
+const MAX_WAIT_MS = 6 * 3600 * 1000;
 
 const promptFor = (item) => `/ourkit-handsoff ${item}
 
@@ -72,18 +76,51 @@ function sessionTimeout(loop) {
   return Math.max(1000, loop.budget.hours * 3600 * 1000 - loop.usedMs);
 }
 
+// A session's output is one JSON result, or a stream of JSON events ending in one. The stream
+// can also say how much of the plan's usage is gone. A Host that doesn't report this leaves
+// `limit` null, and a run simply can't pause early.
+function readEvents(stdout) {
+  const events = [];
+  for (const line of stdout.split(/\r?\n/)) {
+    if (!line.trim()) continue;
+    try {
+      events.push(JSON.parse(line));
+    } catch {
+      // Not an event. Anything a Host prints around its events is ignored.
+    }
+  }
+  return events;
+}
+
+function readLimit(events) {
+  const latest = events.filter((event) => event.type === 'rate_limit_event').pop();
+  if (!latest || !latest.rate_limit_info) return null;
+  const info = latest.rate_limit_info;
+  const windows = Object.entries(info.unifiedWindows || {}).map(([name, window]) => ({ name, ...window }));
+  // The reported status counts as well as the number, because the Host may refuse before 100%.
+  const hit = windows.filter((window) => window.utilization >= LIMIT_THRESHOLD || (window.status && window.status !== 'allowed'));
+  if (hit.length > 0) {
+    const longest = hit.reduce((a, b) => ((a.resetsAt || 0) >= (b.resetsAt || 0) ? a : b));
+    return { name: longest.name, utilization: longest.utilization, resetsAt: longest.resetsAt };
+  }
+  if (info.status && info.status !== 'allowed') {
+    return { name: info.rateLimitType || 'unknown', utilization: null, resetsAt: info.resetsAt };
+  }
+  return null;
+}
+
 function parseSession(stdout) {
+  const events = readEvents(stdout);
+  const parsed = [...events].reverse().find((event) => 'result' in event || event.type === 'result');
+  const limit = readLimit(events);
   let result = stdout;
   let tokens = 0;
-  let isError = false;
-  try {
-    const parsed = JSON.parse(stdout);
+  let isError = true;
+  if (parsed) {
     result = String(parsed.result ?? '');
     isError = parsed.is_error === true;
     const usage = parsed.usage || {};
     tokens = ['input_tokens', 'output_tokens', 'cache_creation_input_tokens'].reduce((sum, key) => sum + (usage[key] || 0), 0);
-  } catch {
-    isError = true;
   }
   const lines = result.split(/\r?\n/).map((line) => line.trim()).filter(Boolean);
   const resultIndex = lines.findLastIndex((line) => /^OURKIT-RESULT:/.test(line));
@@ -92,6 +129,7 @@ function parseSession(stdout) {
   return {
     tokens,
     isError,
+    limit,
     outcome: OUTCOMES.includes(named) ? named : 'unknown',
     summary: before.slice(-SUMMARY_LINES).join('\n'),
   };
@@ -176,7 +214,7 @@ function runSession(session, projectDir, input, timeout) {
   });
 }
 
-async function runLoop(projectDir, loop) {
+async function runLoop(projectDir, loop, options = {}) {
   const main = defaultBranch(projectDir);
   const session = sessionCommand(projectDir);
   const stop = (reason) => {
@@ -207,13 +245,27 @@ async function runLoop(projectDir, loop) {
     }
     if (result.timedOut) return stop('budget');
     // The ticket stays queued, because a failed session may only mean a limit was reached.
-    if (result.status !== 0 || parsed.isError) {
+    const failed = result.status !== 0 || parsed.isError;
+    if (failed && !parsed.limit) {
       loop.lastError = parsed.summary.slice(0, 500) || result.stderr.slice(0, 500);
       return stop('session-failed');
     }
-    loop.results.push({ item, branch, outcome: parsed.outcome, summary: parsed.summary });
-    loop.queue.shift();
+    if (!failed) {
+      loop.results.push({ item, branch, outcome: parsed.outcome, summary: parsed.summary });
+      loop.queue.shift();
+    }
     writeLoop(projectDir, loop);
+    if (!parsed.limit) continue;
+
+    // Close to the plan's limit: take no new ticket, warn, and carry on after it refreshes if allowed.
+    loop.limit = parsed.limit;
+    if (loop.queue.length === 0) break;
+    const when = parsed.limit.resetsAt ? new Date(parsed.limit.resetsAt * 1000).toLocaleString() : 'an unknown time';
+    console.log(`ourkit: warning: the ${parsed.limit.name} usage limit is close, so no new ticket will start. It refreshes at ${when}.`);
+    const waitMs = parsed.limit.resetsAt ? parsed.limit.resetsAt * 1000 - Date.now() + WAIT_MARGIN_MS : null;
+    if (!options.wait || waitMs === null || waitMs > MAX_WAIT_MS) return stop('waiting-for-limit');
+    await new Promise((resolve) => { setTimeout(resolve, Math.max(0, waitMs)); });
+    console.log('ourkit: the usage limit has refreshed, so the run is continuing.');
   }
   const anyShipped = loop.results.some(({ outcome }) => outcome === 'shipped');
   return stop(anyShipped ? 'done' : 'all-blocked');
@@ -223,12 +275,13 @@ function parseStart(args) {
   const options = { items: [] };
   for (let i = 0; i < args.length; i += 1) {
     if (args[i] === '--hours' || args[i] === '--tokens') options[args[i].slice(2)] = Number(args[(i += 1)]);
+    else if (args[i] === '--wait') options.wait = true;
     else options.items.push(args[i]);
   }
   return options;
 }
 
-const USAGE = 'usage: ourkit loop <status | run [--hours <n>] [--tokens <n>] <ticket-or-request>...>';
+const USAGE = 'usage: ourkit loop <status | run [--hours <n>] [--tokens <n>] [--wait] <ticket-or-request>...>';
 
 async function main(args) {
   const [action, ...rest] = args;
@@ -241,7 +294,7 @@ async function main(args) {
     console.error(USAGE);
     return 2;
   }
-  const { hours, tokens, items } = parseStart(rest);
+  const { hours, tokens, items, wait } = parseStart(rest);
   for (const value of [hours, tokens]) {
     if (value !== undefined && !(value > 0)) {
       console.error('ourkit: a Budget must be a number above zero');
@@ -276,10 +329,10 @@ async function main(args) {
     return 1;
   }
   writeLoop(projectDir, loop);
-  const finished = await runLoop(projectDir, loop);
+  const finished = await runLoop(projectDir, loop, { wait });
   const report = writeReport(projectDir, finished).replace(/\\/g, '/');
   console.log(JSON.stringify({ stopped: finished.stopped, finished: finished.results.length, queued: finished.queue.length, usedTokens: finished.usedTokens, report }, null, 2));
-  return finished.stopped === 'done' || finished.stopped === 'all-blocked' || finished.stopped === 'budget' ? 0 : 1;
+  return ['done', 'all-blocked', 'budget', 'waiting-for-limit'].includes(finished.stopped) ? 0 : 1;
 }
 
 module.exports = { LOOP_PATH, budgetLeft, main, parseSession, readLoop };
