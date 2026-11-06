@@ -25,7 +25,7 @@ Turn the approved tasks into working, tested code. You coordinate and judge; sub
    - Run the task's `Verify:` check, using the `ourkit-runner` subagent for commands.
    - If it worked, commit it on the branch, then run `ourkit task done <id>`.
 4. Run `ourkit task list` again and repeat until `finished` is true or nothing is `ready`.
-5. If a task can't be finished, run `ourkit task block <id> "<reason>"`. Independent tasks still become ready, so carry on with those. In Pair, ask the user about the block; in Hands-off, add it to the Question Batch.
+5. If a task can't be finished, run `ourkit task block <id> "<reason>"`. Independent tasks still become ready, so carry on with those. In Pair, ask the user about the block; in Hands-off, add it to the Question Batch. Update the ticket as `.ourkit/kit/core/tracker.md` describes.
 
 ## Patch
 

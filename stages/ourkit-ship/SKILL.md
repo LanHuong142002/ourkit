@@ -35,6 +35,8 @@ Deliver the reviewed change as a clear PR, so the user can decide whether to mer
    - Run `ourkit log add "<name>" "<one-sentence summary>" "<PR link>"`.
    - Save what's worth remembering with `ourkit lessons add <cost|quality> "<lesson>"`. **Cost** means something like a Stage that cost unusually much, and **quality** means something like an error Reviewers keep catching or a Teach-back question often missed. Write each in one line that would change how a future plan is made, and save nothing if this change taught nothing. Only about 30 lines are kept, and the oldest drop off, so make them count.
 
+8. **Update the ticket,** as `.ourkit/kit/core/tracker.md` describes for an open PR.
+
 ## Handing over
 
 Tell the user the PR's link, what they still need to check, and that merging is up to them.

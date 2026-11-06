@@ -1,11 +1,12 @@
-// Installs an optional Tracker Pack from the kit into a project that already has the kit.
+// Tracker Packs: installing one, and linking the Active Change to its ticket.
 const fs = require('fs');
 const path = require('path');
+const { activeChange } = require('./active-change');
+const { readChange, updateChange } = require('./change-state');
 const { INSTALL_RECORD, KIT_ROOT, copyPlanned, trackerPlan } = require('./install');
 
-function main(args) {
-  const [action, name, projectArg] = args;
-  if (action !== 'add' || !name) {
+function addPack(name, projectArg) {
+  if (!name) {
     console.error('usage: ourkit tracker add <name> [project-dir]');
     return 2;
   }
@@ -36,6 +37,39 @@ function main(args) {
   fs.writeFileSync(recordFile, `${JSON.stringify(updated, null, 2)}\n`);
   console.log(`ourkit: installed the ${name} Tracker Pack`);
   return 0;
+}
+
+function installedPack(projectDir) {
+  const recordFile = path.join(projectDir, INSTALL_RECORD);
+  if (!fs.existsSync(recordFile)) return null;
+  return JSON.parse(fs.readFileSync(recordFile, 'utf8')).tracker || null;
+}
+
+function main(args) {
+  const [action, value, projectArg] = args;
+  if (action === 'add') return addPack(value, projectArg);
+
+  const projectDir = process.cwd();
+  const pack = installedPack(projectDir);
+  if (action === 'status') {
+    const change = activeChange(projectDir);
+    const ticket = change.error ? null : readChange(projectDir, change.id).ticket || null;
+    const operations = pack ? `.ourkit/kit/tracker-packs/${pack}/operations.md` : null;
+    console.log(JSON.stringify({ pack, operations, ticket }, null, 2));
+    return 0;
+  }
+  if (action === 'link' && value && value.trim()) {
+    const change = activeChange(projectDir);
+    if (change.error) {
+      console.error(`ourkit: no Active Change: ${change.error}`);
+      return 1;
+    }
+    updateChange(projectDir, change.id, { ticket: value.trim() });
+    console.log(`ourkit: this change works on ticket ${value.trim()}`);
+    return 0;
+  }
+  console.error('usage: ourkit tracker <status | link <ticket> | add <name> [project-dir]>');
+  return 2;
 }
 
 module.exports = { main };
