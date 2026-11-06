@@ -1,48 +1,19 @@
 #!/usr/bin/env node
-// Minimal Installer: copies every Stage into the project through the Host Shell.
-// Deterministic by design (ADR 0005). Questions and Role selection arrive in #9, `upgrade` in #10.
-const fs = require('fs');
-const path = require('path');
+const [, , subcommand, ...args] = process.argv;
 
-if (process.argv[2] === 'check') {
-  process.exit(require('../src/contract-check').main(process.argv[3], process.argv[4]));
+const subcommands = {
+  check: () => require('../src/contract-check').main(args[0], args[1]),
+  command: () => require('../src/stack-profile').main(args[0], args[1]),
+  rules: () => require('../src/rules').main(args[0]),
+  pack: () => require('../src/stack-pack').main(args[0], args[1], args[2]),
+  ticket: () => require('../src/ticket-standard').main(args),
+};
+
+async function run() {
+  if (Object.hasOwn(subcommands, subcommand)) return subcommands[subcommand]();
+  return require('../src/install').main(process.argv.slice(2));
 }
 
-if (process.argv[2] === 'command') {
-  process.exit(require('../src/stack-profile').main(process.argv[3], process.argv[4]));
-}
-
-if (process.argv[2] === 'rules') {
-  process.exit(require('../src/rules').main(process.argv[3]));
-}
-
-if (process.argv[2] === 'pack') {
-  process.exit(require('../src/stack-pack').main(process.argv[3], process.argv[4], process.argv[5]));
-}
-
-if (process.argv[2] === 'ticket') {
-  process.exit(require('../src/ticket-standard').main(process.argv.slice(3)));
-}
-
-const KIT_ROOT = path.join(__dirname, '..');
-const projectDir = path.resolve(process.argv[2] || process.cwd());
-
-const shell = JSON.parse(
-  fs.readFileSync(path.join(KIT_ROOT, 'hosts', 'claude-code', 'shell.json'), 'utf8'),
-);
-const stagesDir = path.join(KIT_ROOT, 'stages');
-const stages = fs.readdirSync(stagesDir);
-
-const targetOf = (stage) => path.join(projectDir, shell.stagesDir, stage);
-
-// Check everything first so a refusal never leaves a partial install.
-const existing = stages.filter((stage) => fs.existsSync(targetOf(stage)));
-if (existing.length > 0) {
-  console.error(`ourkit: already installed in ${projectDir}: ${existing.join(', ')}`);
-  process.exit(1);
-}
-
-for (const stage of stages) {
-  fs.cpSync(path.join(stagesDir, stage), targetOf(stage), { recursive: true });
-  console.log(`ourkit: installed ${path.join(shell.stagesDir, stage)}`);
-}
+run().then((code) => {
+  process.exitCode = code;
+});
