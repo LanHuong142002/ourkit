@@ -20,6 +20,10 @@ if (process.argv[2] === 'pack') {
   process.exit(require('../src/stack-pack').main(process.argv[3], process.argv[4], process.argv[5]));
 }
 
+if (process.argv[2] === 'ticket') {
+  process.exit(require('../src/ticket-standard').main(process.argv.slice(3)));
+}
+
 const KIT_ROOT = path.join(__dirname, '..');
 const projectDir = path.resolve(process.argv[2] || process.cwd());
 
