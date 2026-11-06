@@ -17,6 +17,12 @@ const AREAS = {
   'public API': ['openapi', 'swagger', 'graphql', 'proto', 'public-api', 'publicapi'],
 };
 
+function stagesFor(record) {
+  if (record.flow !== 'bug-fix') return ROUTES[record.tier];
+  const bugFix = ['Reproduce', 'Fix', 'Verify', 'Review'];
+  return record.tier === 'patch' ? bugFix : [...bugFix, 'Ship'];
+}
+
 // Splits on separators and camelCase, so "author.txt" isn't "auth" but "AuthService" is.
 function tokensOf(file) {
   const spaced = file.replace(/([a-z0-9])([A-Z])/g, '$1 $2').toLowerCase();
@@ -100,11 +106,11 @@ function main(args) {
       console.error('ourkit: this change has no Tier yet');
       return 1;
     }
-    console.log(JSON.stringify({ ...record, stages: ROUTES[record.tier] }, null, 2));
+    console.log(JSON.stringify({ ...record, stages: stagesFor(record) }, null, 2));
     return 0;
   }
   console.error('usage: ourkit tier <scan | show | set <patch|feature|epic> --reason "<why>" [--sensitive <areas>] [--not-sensitive "<why>"]>');
   return 2;
 }
 
-module.exports = { ROUTES, TIERS, floorViolation, main, scanSensitive, setTier };
+module.exports = { ROUTES, TIERS, floorViolation, main, scanSensitive, setTier, stagesFor };

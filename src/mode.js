@@ -34,6 +34,20 @@ function modeMain(args) {
   });
 }
 
+function flowMain(args) {
+  return withChange((projectDir, id, record) => {
+    const [value] = args;
+    if (value === undefined) {
+      console.log(record.flow || 'standard');
+      return 0;
+    }
+    if (value !== 'bug-fix') return fail('usage: ourkit flow [bug-fix]');
+    updateChange(projectDir, id, { flow: value });
+    console.log('ourkit: this change follows the Bug-fix flow');
+    return 0;
+  });
+}
+
 function decisionMain(args) {
   return withChange((projectDir, id, record) => {
     const decisions = record.decisions || [];
@@ -79,4 +93,4 @@ function questionMain(args) {
   });
 }
 
-module.exports = { DEFAULT_MODE, MODES, decisionMain, modeMain, modeOf, questionMain };
+module.exports = { DEFAULT_MODE, MODES, decisionMain, flowMain, modeMain, modeOf, questionMain };

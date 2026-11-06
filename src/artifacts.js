@@ -9,6 +9,7 @@ const ARTIFACTS = {
   tasks: { folder: 'tasks', sections: ['Tasks'], check: checkTasks },
   report: { folder: 'reports', sections: ['Summary', 'Details'], check: checkReport },
   epic: { folder: 'epics', sections: [], check: checkEpic },
+  bug: { folder: 'bugs', sections: ['Symptom', 'Reproduction', 'Root Cause', 'Fix', 'Verification'] },
 };
 
 const relativePathFor = (name, id) =>
