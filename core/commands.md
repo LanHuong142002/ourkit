@@ -20,6 +20,7 @@ node .ourkit/kit/bin/ourkit.js <subcommand>
 | `intake assess <facts-file>`, `intake status` | Decide whether Hands-off may take a ticket |
 | `lessons`, `lessons add <cost\|quality> "<lesson>"` | Read or save Lessons |
 | `log add "<name>" "<summary>" "<link>"` | Add a line to the Project Log |
+| `loop run --hours <n> <tickets>`, `loop run`, `loop status` | Start, continue or inspect a Loop Run |
 | `mode [pair\|hands-off]` | Read or set the Mode of the Active Change |
 | `decision add`, `decision list` | Write or read the Decision Log |
 | `question add`, `question answer`, `question list` | Write or read the Question Batch |

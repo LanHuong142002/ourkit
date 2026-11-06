@@ -13,6 +13,7 @@ const { resolveLayers } = require('./rules');
 const SEVERITIES = ['blocking', 'non-blocking'];
 const KIT_EXCLUDES = [':(exclude).ourkit', ':(exclude).claude'];
 const UNTRACKED_MAX_BYTES = 100 * 1024;
+const MAX_FIX_ATTEMPTS = 2;
 
 function git(projectDir, args) {
   const result = spawnSync('git', ['-c', 'core.quotepath=off', ...args], { cwd: projectDir, encoding: 'utf8', maxBuffer: 256 * 1024 * 1024 });
@@ -118,12 +119,25 @@ function main(args) {
     console.log(`ourkit: resolved finding ${first}`);
     return 0;
   }
+  // ADR 0009: a blocking finding gets at most two automatic fixes.
+  if (action === 'attempt' && first) {
+    const target = review.findings.find((finding) => String(finding.id) === first);
+    if (!target) return fail(`no finding ${first}`, 1);
+    const attempts = (target.attempts || 0) + 1;
+    if (attempts > MAX_FIX_ATTEMPTS) {
+      return fail(`finding ${first} has had ${MAX_FIX_ATTEMPTS} fix attempts, so stop and leave it for the user (ADR 0009)`, 1);
+    }
+    const findings = review.findings.map((finding) => (finding === target ? { ...finding, attempts } : finding));
+    updateChange(projectDir, change.id, { review: { ...review, findings } });
+    console.log(`ourkit: fix attempt ${attempts} of ${MAX_FIX_ATTEMPTS} for finding ${first}`);
+    return 0;
+  }
   if (action === 'complete') {
     updateChange(projectDir, change.id, { review: { ...review, reviewed: fingerprint(projectDir, scope) } });
     console.log('ourkit: recorded a review of the change as it now stands');
     return 0;
   }
-  return fail('usage: ourkit review <packet | list | add <blocking|non-blocking> "<finding>" | resolve <id> | complete>');
+  return fail('usage: ourkit review <packet | list | add <blocking|non-blocking> "<finding>" | attempt <id> | resolve <id> | complete>');
 }
 
 module.exports = { fingerprint, main, reviewGate };
