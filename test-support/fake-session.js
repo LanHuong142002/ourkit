@@ -44,6 +44,21 @@ fs.mkdirSync('.ourkit', { recursive: true });
 const lessons = fs.existsSync('.ourkit/lessons.md') ? fs.readFileSync('.ourkit/lessons.md', 'utf8') : '# Lessons\n\n';
 fs.writeFileSync('.ourkit/lessons.md', `${lessons}- [cost] Learned from ${item}\n`);
 
+// The records a real session keeps, for the Run Report to gather from this branch.
+fs.mkdirSync('.ourkit/changes', { recursive: true });
+fs.writeFileSync(`.ourkit/changes/${branch}.json`, JSON.stringify({
+  decisions: [{ id: 1, decision: `Decided on ${item}`, why: 'It was simplest' }],
+  questions: [
+    { id: 1, question: `Open question on ${item}?`, answer: null },
+    { id: 2, question: `Answered question on ${item}?`, answer: 'Yes' },
+  ],
+  testHandoff: [{ what: `Check ${item}`, steps: '1. Open it. 2. Look.' }],
+  review: { findings: [
+    { id: 1, severity: 'non-blocking', text: `A nicety on ${item}`, resolved: false },
+    { id: 2, severity: 'blocking', text: `A fixed bug on ${item}`, resolved: true },
+  ] },
+}));
+
 if (item.includes('stopped')) {
   fs.writeFileSync('half-done.txt', 'keep me');
   respond(`${SUMMARY}\nOURKIT-RESULT: stopped`);

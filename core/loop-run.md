@@ -24,7 +24,7 @@ Each ticket's work stays on its own branch. A session that stops midway has its 
 | `session-failed` | A session failed, perhaps at a usage limit. The ticket stays queued |
 | `dirty-tree` | A session left uncommitted work on the default branch |
 
-Run `ourkit loop status` to see the results, and `ourkit loop run` with no tickets to continue a queue. A ticket that stops at a Hands-off stop doesn't end the run; the next ticket starts.
+Every stop writes a Run Report to `.ourkit/run-report.md`: what's waiting for the user, the Question Batch, the Test Handoff, the Decision Log and what finished. Use `/ourkit-run-report` to go through it. Run `ourkit loop status` to see the raw results, and `ourkit loop run` with no tickets to continue a queue. A ticket that stops at a Hands-off stop doesn't end the run; the next ticket starts.
 
 ## The limits
 
