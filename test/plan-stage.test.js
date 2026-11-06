@@ -94,7 +94,7 @@ test('Hands-off does not wait for approval', () => {
 
 test('the Stage looks for Prior Art first and approves only on the user\'s word', () => {
   const stage = fs.readFileSync(path.join(KIT_ROOT, 'stages', 'ourkit-plan', 'SKILL.md'), 'utf8');
-  for (const required of ['Look for Prior Art', 'ourkit gate artifact plan', 'Only after they approve', 'stop here', "Don't write code"]) {
+  for (const required of ['Look for Prior Art', 'ourkit gate artifact plan', 'Only after they approve', 'stop here', "Don't write code", 'never assume one']) {
     assert.ok(stage.includes(required), required);
   }
 });

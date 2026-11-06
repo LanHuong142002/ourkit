@@ -16,6 +16,7 @@ node .ourkit/kit/bin/ourkit.js <subcommand>
 | `pending add "<text>"`, `pending done <id>` | Save or finish a waiting item |
 | `flow [bug-fix]` | Read or set whether a change follows the Bug-fix flow |
 | `gate scope`, `gate floor`, `gate run <test\|lint\|build>` | Run a Gate on the Active Change |
+| `handsoff status`, `handsoff needs-service`, `handsoff test-handoff` | See where a Hands-off change stands, and record what the user must do |
 | `intake assess <facts-file>`, `intake status` | Decide whether Hands-off may take a ticket |
 | `lessons`, `lessons add <cost\|quality> "<lesson>"` | Read or save Lessons |
 | `log add "<name>" "<summary>" "<link>"` | Add a line to the Project Log |

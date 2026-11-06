@@ -27,7 +27,7 @@ Decide how to build what the spec asks for, before any code is written. In these
    - **Prior Art:** what you found, and your conclusion: reuse, or write new with the reason.
    - **Changes:** the files or areas to change, and how.
    - **Risks:** what could go wrong and what you'll do about it. Say so if the change touches a Sensitive Area.
-   - **Test Strategy:** how each requirement will be verified, including what can't be verified automatically and will become a Test Handoff.
+   - **Test Strategy:** how each requirement will be verified, including what can't be verified automatically and will become a Test Handoff. Plan only on commands from `ourkit command <name>`. If the project has no test command, never assume one. Say what that leaves unverified, and put adding one to the Question Batch, or ask in Pair.
 4. **Run the Gate** with `ourkit gate artifact plan`, and fix any problem it reports. Check that the plan covers every requirement and adds nothing the spec doesn't ask for.
 
 ## Handing over

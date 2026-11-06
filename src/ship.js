@@ -2,9 +2,12 @@
 const { spawnSync } = require('child_process');
 const path = require('path');
 const { checkArtifact, parseTasks, readDocument, relativePathFor } = require('./artifacts');
-const { actionFor } = require('./gate');
+const { updateChange } = require('./change-state');
+const { actionFor, gateScope } = require('./gate');
+const { intakeProblem, stopRequired } = require('./handsoff');
+const { modeOf } = require('./mode');
 const { reportRequired } = require('./report');
-const { reviewGate } = require('./review');
+const { fingerprint, reviewGate } = require('./review');
 const { summarize } = require('./tasks');
 
 const KIT_EXCLUDES = [':(exclude).ourkit', ':(exclude).claude'];
@@ -38,8 +41,36 @@ function shipGate(projectDir, record, change) {
   if (reportRequired(record)) {
     problems.push(...checkArtifact(projectDir, 'report', change.id).map((problem) => `Change Report: ${problem}`));
   }
+
+  // ADR 0012: in Hands-off, the second stop. Everything above is settled first, so the user approves finished work.
+  let waitingForUser = false;
+  if (modeOf(record) === 'hands-off') {
+    const intake = intakeProblem(record);
+    if (intake) {
+      problems.push(intake);
+      waitingForUser = true;
+    } else if (stopRequired(record)) {
+      const current = fingerprint(projectDir, gateScope(projectDir, change));
+      if (record.shipApproval !== current) {
+        problems.push(record.shipApproval ? 'the change moved after the user approved it, so it needs approving again' : 'the user must approve this change before Ship');
+        waitingForUser = true;
+      }
+    }
+  }
   if (problems.length === 0) return { status: 'pass', severity: 'none', action: 'continue' };
-  return { status: 'fail', problems, severity: 'block', action: actionFor('block', record) };
+  return { status: 'fail', problems, severity: 'block', action: waitingForUser ? 'stop-for-user' : actionFor('block', record) };
 }
 
-module.exports = { shipGate };
+// Recorded only when the rest of the Gate passes, so approval always means approving finished work.
+function approveShip(projectDir, record, change) {
+  const { problems = [] } = shipGate(projectDir, { ...record, mode: 'pair' }, change);
+  if (problems.length > 0) {
+    console.error(`ourkit: this change isn't ready for approval: ${problems.join('; ')}`);
+    return 1;
+  }
+  updateChange(projectDir, change.id, { shipApproval: fingerprint(projectDir, gateScope(projectDir, change)) });
+  console.log("ourkit: recorded the user's approval of this change as it now stands");
+  return 0;
+}
+
+module.exports = { approveShip, shipGate };

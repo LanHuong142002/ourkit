@@ -32,6 +32,7 @@ A `status` of `not-run` means nothing was verified. Report it as not run, never 
 - `ourkit gate ship` checks that a PR may open: reviewed, every task finished, everything committed, not on the default branch, and with a Change Report when one is required.
 - `ourkit gate approval` checks that Build may start. In Pair, the user must have approved this exact plan. Hands-off passes.
 - `ourkit gate approve-plan` records the approval. Run it only after the user has said they approve. Never run it on their behalf or because they went quiet. Changing the plan afterwards makes it need approving again.
+- In Hands-off, a change touching a Sensitive Area or needing the user to act on a service stops at `gate approval` and again at `gate ship`, with the action `stop-for-user`. `ourkit gate approve-ship` records the second approval, under the same rule. Changing the work afterwards makes it need approving again.
 
 ## Judge only the change
 

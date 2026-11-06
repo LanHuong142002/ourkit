@@ -6,6 +6,7 @@ const { activeChange } = require('./active-change');
 const { ARTIFACTS, checkArtifact, relativePathFor } = require('./artifacts');
 const { readBaseline } = require('./baseline');
 const { readChange, updateChange } = require('./change-state');
+const { intakeProblem, stopRequired } = require('./handsoff');
 const { hashFile } = require('./install');
 const { modeOf } = require('./mode');
 const { lookupCommand, InvalidStackProfile } = require('./stack-profile');
@@ -94,13 +95,19 @@ const planFile = (projectDir, id) => path.join(projectDir, relativePathFor('plan
 // In Pair, Build waits for the user to approve this exact plan (ADR 0008). Hands-off doesn't wait (ADR 0012).
 function approvalGate(projectDir, record, id) {
   const pass = { status: 'pass', severity: 'none', action: 'continue' };
-  if (modeOf(record) === 'hands-off') return { ...pass, reason: 'Hands-off does not wait for plan approval' };
+  const handsOff = modeOf(record) === 'hands-off';
+  if (handsOff) {
+    const problem = intakeProblem(record);
+    if (problem) return { status: 'fail', reason: problem, severity: 'block', action: 'stop-for-user' };
+    if (!stopRequired(record)) return { ...pass, reason: 'Hands-off does not wait for plan approval' };
+  }
   const file = planFile(projectDir, id);
   let reason = null;
   if (!fs.existsSync(file)) reason = "the plan doesn't exist yet";
   else if (!record.planApproval) reason = 'the user has not approved the plan yet';
   else if (record.planApproval !== hashFile(file)) reason = 'the plan changed after the user approved it, so it needs approving again';
-  return reason ? { status: 'fail', reason, severity: 'block', action: ACTIONS.block.pair } : pass;
+  if (!reason) return pass;
+  return { status: 'fail', reason, severity: 'block', action: handsOff ? 'stop-for-user' : ACTIONS.block.pair };
 }
 
 function approvePlan(projectDir, id) {
@@ -141,6 +148,8 @@ function main(args) {
     result = approvalGate(projectDir, record, change.id);
   } else if (action === 'approve-plan') {
     return approvePlan(projectDir, change.id);
+  } else if (action === 'approve-ship') {
+    return require('./ship').approveShip(projectDir, record, change);
   } else if (action === 'run' && RUNNABLE.includes(name)) {
     try {
       result = runGate(projectDir, record, name);
@@ -150,7 +159,7 @@ function main(args) {
     }
   } else {
     const documents = Object.keys(ARTIFACTS).join('|');
-    return fail(`usage: ourkit gate <scope | floor | review | ship | approval | approve-plan | run <${RUNNABLE.join('|')}> | path <${documents}> | artifact <${documents}>>`);
+    return fail(`usage: ourkit gate <scope | floor | review | ship | approval | approve-plan | approve-ship | run <${RUNNABLE.join('|')}> | path <${documents}> | artifact <${documents}>>`);
   }
   console.log(JSON.stringify(result, null, 2));
   return result.severity === 'block' ? 1 : 0;
