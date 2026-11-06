@@ -2,6 +2,7 @@
 const [, , subcommand, ...args] = process.argv;
 
 const subcommands = {
+  'active-change': () => require('../src/active-change').main(args[0]),
   baseline: () => require('../src/baseline').main(args[0]),
   check: () => require('../src/contract-check').main(args[0], args[1]),
   command: () => require('../src/stack-profile').main(args[0], args[1]),
