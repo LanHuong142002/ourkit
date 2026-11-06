@@ -3,6 +3,7 @@ const { spawnSync } = require('child_process');
 const path = require('path');
 const { checkArtifact, parseTasks, readDocument, relativePathFor } = require('./artifacts');
 const { actionFor } = require('./gate');
+const { reportRequired } = require('./report');
 const { reviewGate } = require('./review');
 const { summarize } = require('./tasks');
 
@@ -31,6 +32,9 @@ function shipGate(projectDir, record, change) {
       if (blocked.length > 0) problems.push(`these tasks are blocked: ${blocked.join(', ')}`);
       else if (!finished) problems.push('some tasks are not finished');
     }
+  }
+  if (reportRequired(record)) {
+    problems.push(...checkArtifact(projectDir, 'report', change.id).map((problem) => `Change Report: ${problem}`));
   }
   if (problems.length === 0) return { status: 'pass', severity: 'none', action: 'continue' };
   return { status: 'fail', problems, severity: 'block', action: actionFor('block', record) };

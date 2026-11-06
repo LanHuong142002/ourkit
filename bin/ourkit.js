@@ -12,6 +12,7 @@ const subcommands = {
   pack: () => require('../src/stack-pack').main(args[0], args[1], args[2]),
   gate: () => require('../src/gate').main(args),
   decision: () => require('../src/mode').decisionMain(args),
+  log: () => require('../src/report').main(args),
   mode: () => require('../src/mode').modeMain(args),
   question: () => require('../src/mode').questionMain(args),
   task: () => require('../src/tasks').main(args),

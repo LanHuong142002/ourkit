@@ -6,6 +6,7 @@ const ARTIFACTS = {
   spec: { folder: 'specs', sections: ['Goal', 'Requirements', 'Acceptance Criteria', 'Out of Scope', 'Open Questions'] },
   plan: { folder: 'plans', sections: ['Approach', 'Prior Art', 'Changes', 'Risks', 'Test Strategy'] },
   tasks: { folder: 'tasks', sections: ['Tasks'], check: checkTasks },
+  report: { folder: 'reports', sections: ['Summary', 'Details'], check: checkReport },
 };
 
 const relativePathFor = (name, id) =>
@@ -71,6 +72,12 @@ function checkTasks(text) {
   const cycle = findCycle(tasks);
   if (cycle) problems.push(`tasks depend on each other in a circle: ${cycle.join(' -> ')}`);
   return problems;
+}
+
+function checkReport(text) {
+  const summary = text.match(/^## Summary[ \t]*\n([\s\S]*?)(?=^## )/m);
+  const lines = summary ? summary[1].split('\n').filter((line) => line.trim()).length : 0;
+  return lines === 5 ? [] : [`the Summary must be exactly 5 lines, and it has ${lines}`];
 }
 
 // Returns what's wrong with an artifact, as a list of problems.

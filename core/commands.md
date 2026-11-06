@@ -15,6 +15,7 @@ node .ourkit/kit/bin/ourkit.js <subcommand>
 | `pending` | Print setup work still waiting for the user, in one line |
 | `pending add "<text>"`, `pending done <id>` | Save or finish a waiting item |
 | `gate scope`, `gate floor`, `gate run <test\|lint\|build>` | Run a Gate on the Active Change |
+| `log add "<name>" "<summary>" "<link>"` | Add a line to the Project Log |
 | `mode [pair\|hands-off]` | Read or set the Mode of the Active Change |
 | `decision add`, `decision list` | Write or read the Decision Log |
 | `question add`, `question answer`, `question list` | Write or read the Question Batch |
