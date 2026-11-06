@@ -14,6 +14,7 @@ node .ourkit/kit/bin/ourkit.js <subcommand>
 | `check --project` | Verify Project Roles, Overrides and Connectors |
 | `pending` | Print setup work still waiting for the user, in one line |
 | `pending add "<text>"`, `pending done <id>` | Save or finish a waiting item |
+| `tier scan`, `tier set`, `tier show` | Find Sensitive Area signals, then set or read the Tier |
 | `ticket <body-file> --title "<title>" [--pr]` | Assess a ticket or PR against the Ticket Standard |
 | `pack add <pack-folder>` | Install a Stack Pack |
 | `baseline` | Record the Baseline of a Brownfield project, once |
