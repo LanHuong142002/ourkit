@@ -21,10 +21,17 @@ Each ticket's work stays on its own branch. A session that stops midway has its 
 | `done` | The queue is empty and at least one ticket shipped |
 | `all-blocked` | The queue is empty and nothing shipped |
 | `budget` | The Budget ran out |
-| `session-failed` | A session failed, perhaps at a usage limit. The ticket stays queued |
+| `waiting-for-limit` | The plan's usage limit is close, so no new ticket started. The ticket stays queued |
+| `session-failed` | A session failed for another reason. The ticket stays queued |
 | `dirty-tree` | A session left uncommitted work on the default branch |
 
 Every stop writes a Run Report to `.ourkit/run-report.md`: what's waiting for the user, the Question Batch, the Test Handoff, the Decision Log and what finished. Use `/ourkit-run-report` to go through it. Run `ourkit loop status` to see the raw results, and `ourkit loop run` with no tickets to continue a queue. A ticket that stops at a Hands-off stop doesn't end the run; the next ticket starts.
+
+## The plan's usage limit
+
+When the Host reports plan usage, a run stops taking new tickets at 90% of any window and warns the user. A ticket already running isn't interrupted. Add `--wait` and the run carries on by itself once the limit refreshes, as long as that's within 6 hours and the terminal stays open. Otherwise, it stops, and `ourkit loop run` continues it later.
+
+A Host that doesn't report usage can't pause early, and works the same otherwise. A session that fails at the limit keeps its ticket queued either way.
 
 ## The limits
 
