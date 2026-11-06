@@ -8,6 +8,7 @@ const { spawnSync } = require('child_process');
 const KIT_ROOT = path.join(__dirname, '..');
 const BIN = path.join(KIT_ROOT, 'bin', 'ourkit.js');
 const TASKS = '## Tasks\n\n### 1. One\n\nDo it.\n\nDepends on: none\nVerify: x\n\n### 2. Two\n\nDo it.\n\nDepends on: none\nVerify: x\n';
+const REPORT = '## Summary\n\none\ntwo\nthree\nfour\nfive\n\n## Details\n\nMore.\n';
 let project;
 
 const git = (...args) => {
@@ -34,6 +35,7 @@ const readyFeature = () => {
   write(ourkit('gate', 'path', 'tasks').stdout.trim(), TASKS);
   ourkit('task', 'done', '1');
   ourkit('task', 'done', '2');
+  write(ourkit('gate', 'path', 'report').stdout.trim(), REPORT);
   commitAll();
   ourkit('review', 'complete');
 };
