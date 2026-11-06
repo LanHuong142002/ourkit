@@ -28,6 +28,8 @@ The Mode decides what happens next:
 
 A `status` of `not-run` means nothing was verified. Report it as not run, never as passed, and never guess a replacement command. Deploying is never a Gate command (ADR 0010).
 
+- `ourkit gate review` checks that the change was reviewed as it now stands, with no blocking finding left.
+- `ourkit gate ship` checks that a PR may open: reviewed, every task finished, everything committed, and not on the default branch.
 - `ourkit gate approval` checks that Build may start. In Pair, the user must have approved this exact plan. Hands-off passes.
 - `ourkit gate approve-plan` records the approval. Run it only after the user has said they approve. Never run it on their behalf or because they went quiet. Changing the plan afterwards makes it need approving again.
 
