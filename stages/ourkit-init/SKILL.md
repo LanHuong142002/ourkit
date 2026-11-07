@@ -45,7 +45,9 @@ A Greenfield project has no Baseline, because there is no old code to protect. D
 
 A Connector is an MCP connection to an external service. Every enabled Connector costs context, so enable one only when the project really needs it.
 
-1. **Decide what's needed** from what the project uses, such as where its tickets, deployments and docs live. Propose each Connector with its reason, and wait for the user to agree. Proposing none is fine.
+Tickets don't need a Connector. They use a Tracker Pack, which works through the service's own command-line tool and needs no token from this setup. If `ourkit tracker status` shows no pack and the project's tickets are in GitHub Issues, tell the user to add the `github` pack with the `tracker add` command in the kit's README.
+
+1. **Decide what's needed** from what the project uses, such as where its deployments and docs live. Propose each Connector with its reason, and wait for the user to agree. Proposing none is fine.
 2. **Configure what you can** in `.mcp.json`, following the service's official MCP documentation.
    - Never write a token, password or key to any file in the repo. Reference it as `${VARIABLE}`, and if the user pastes one, don't save it.
    - Every value under `env` and `headers` must be a `${VARIABLE}` reference.

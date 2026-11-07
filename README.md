@@ -51,7 +51,13 @@ To work through many tickets, run this in a terminal from the default branch, wi
 node .ourkit/kit/bin/ourkit.js loop run --hours 4 --wait 42 43 44
 ```
 
-Each ticket gets a fresh session on its own branch. When the run stops, read `.ourkit/run-report.md`, or run `/ourkit-run-report`. See [core/loop-run.md](core/loop-run.md) for when it stops and what sessions may do.
+Each ticket gets a fresh session on its own branch. Tracker commands run in the agent's shell, which may not have the same PATH as your terminal. Windows' Git Bash can drop `gh`; if a session reports it missing, add it in `~/.bashrc`:
+
+```
+export PATH="$PATH:/c/Program Files/GitHub CLI"
+```
+
+When the run stops, read `.ourkit/run-report.md`, or run `/ourkit-run-report`. See [core/loop-run.md](core/loop-run.md) for when it stops and what sessions may do.
 
 Tickets must meet the [Ticket Standard](core/ticket-standard.md). Hands-off takes only tickets written by a team member, or labelled `ourkit:ready` by one.
 

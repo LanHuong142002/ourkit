@@ -29,6 +29,11 @@ const subcommands = {
 };
 
 async function run() {
+  if (['--help', '-h', 'help'].includes(subcommand)) {
+    console.log(`usage: ourkit [project-dir] to install, or ourkit <subcommand>:
+  ${Object.keys(subcommands).sort().join(', ')}`);
+    return 0;
+  }
   if (Object.hasOwn(subcommands, subcommand)) return subcommands[subcommand]();
   return require('../src/install').main(process.argv.slice(2));
 }

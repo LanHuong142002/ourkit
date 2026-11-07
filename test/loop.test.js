@@ -147,6 +147,17 @@ test('stops when a session leaves uncommitted work on the default branch', () =>
   assert.strictEqual(result.status, 1);
   assert.strictEqual(state().stopped, 'dirty-tree');
   assert.deepStrictEqual(sessions(), ['dirtymain']);
+  const [stopped] = state().results;
+  assert.strictEqual(stopped.outcome, 'blocked', 'the session said how it ended');
+  assert.match(stopped.summary, /left uncommitted work/);
+  assert.match(stopped.summary, /six about dirtymain/);
+});
+
+test('a setup step recorded on the default branch does not stop the run, and stays for the user', () => {
+  const result = loop('run', '--hours', '1', 'needssetup', 't2');
+  assert.strictEqual(result.status, 0, result.stderr);
+  assert.deepStrictEqual(sessions(), ['needssetup', 't2']);
+  assert.match(fs.readFileSync(path.join(project, '.ourkit', 'pending.json'), 'utf8'), /Install a tool/);
 });
 
 test('a result line that is missing counts as unknown, never as shipped', () => {
@@ -228,6 +239,21 @@ test('an Override of the session permissions takes effect on upgrade', () => {
   assert.match(fs.readFileSync(path.join(target, '.ourkit/kit/host/session-settings.json'), 'utf8'), /make/);
   assert.strictEqual(run('check', '--project').status, 0);
   assert.strictEqual(run('upgrade').status, 0, 'a second upgrade sees no hand edit');
+});
+
+test('session permissions cover every form of pushing to the default branch', () => {
+  const { deny } = JSON.parse(fs.readFileSync(path.join(KIT_ROOT, 'hosts/claude-code/session-settings.json'), 'utf8')).permissions;
+  for (const rule of ['git push -u origin main*', 'git push -u origin master*', 'git push *:main*', 'git push *:master*', 'gh api *merge*']) {
+    assert.ok(deny.includes(`Bash(${rule})`), rule);
+  }
+});
+
+test('ourkit --help lists the commands instead of treating the flag as a folder', () => {
+  const result = spawnSync(process.execPath, [BIN, '--help'], { cwd: project, encoding: 'utf8' });
+  assert.strictEqual(result.status, 0);
+  assert.match(result.stdout, /usage:/);
+  assert.match(result.stdout, /\bloop\b/);
+  assert.ok(!fs.existsSync(path.join(project, '.ourkit')));
 });
 
 test('a blocking finding gets at most two fix attempts', () => {
