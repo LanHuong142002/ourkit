@@ -18,9 +18,14 @@ const AREAS = {
 };
 
 function stagesFor(record) {
-  if (record.flow !== 'bug-fix') return ROUTES[record.tier];
+  // A Patch in Pair ends at Review because the user commits it. In Hands-off, no one else will, so it ships.
+  const handsOff = record.mode === 'hands-off';
+  const patchRoute = (stages) => (handsOff ? [...stages, 'Ship'] : stages);
+  if (record.flow !== 'bug-fix') {
+    return record.tier === 'patch' ? patchRoute(ROUTES.patch) : ROUTES[record.tier];
+  }
   const bugFix = ['Reproduce', 'Fix', 'Verify', 'Review'];
-  return record.tier === 'patch' ? bugFix : [...bugFix, 'Ship'];
+  return record.tier === 'patch' ? patchRoute(bugFix) : [...bugFix, 'Ship'];
 }
 
 // Splits on separators and camelCase, so "author.txt" isn't "auth" but "AuthService" is.

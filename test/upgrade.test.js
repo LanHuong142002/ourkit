@@ -11,8 +11,8 @@ const KIT_ROOT = path.join(__dirname, '..');
 const BIN = path.join(KIT_ROOT, 'bin', 'ourkit.js');
 const CORE = '.ourkit/kit/core/rule-layering.md';
 const CORE_OVERRIDE = '.ourkit/overrides/core/rule-layering.md';
-const STAGE = '.claude/skills/ourkit-ping/SKILL.md';
-const STAGE_OVERRIDE = '.ourkit/overrides/stages/ourkit-ping/SKILL.md';
+const STAGE = '.claude/skills/ourkit-init/SKILL.md';
+const STAGE_OVERRIDE = '.ourkit/overrides/stages/ourkit-init/SKILL.md';
 let project;
 
 const abs = (relative) => path.join(project, relative);

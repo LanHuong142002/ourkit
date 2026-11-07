@@ -8,8 +8,8 @@ const { hashFile, parseRoles } = require('../src/install');
 
 const KIT_ROOT = path.join(__dirname, '..');
 const BIN = path.join(KIT_ROOT, 'bin', 'ourkit.js');
-const STAGE_SOURCE = path.join(KIT_ROOT, 'stages', 'ourkit-ping', 'SKILL.md');
-const STAGE = path.join('.claude', 'skills', 'ourkit-ping', 'SKILL.md');
+const STAGE_SOURCE = path.join(KIT_ROOT, 'stages', 'ourkit-init', 'SKILL.md');
+const STAGE = path.join('.claude', 'skills', 'ourkit-init', 'SKILL.md');
 const FLAGS = ['--entry', 'brownfield', '--roles', 'backend'];
 
 let project;
@@ -59,7 +59,7 @@ test('records the entry, Roles, detected files and a hash of every installed fil
   assert.strictEqual(host, 'claude-code');
   assert.deepStrictEqual(roles, ['backend']);
   assert.deepStrictEqual(detected, ['package.json']);
-  assert.strictEqual(files['.claude/skills/ourkit-ping/SKILL.md'], hashFile(path.join(project, STAGE)));
+  assert.strictEqual(files['.claude/skills/ourkit-init/SKILL.md'], hashFile(path.join(project, STAGE)));
   for (const relative of Object.keys(files)) assert.ok(exists(relative), relative);
 });
 
@@ -79,7 +79,7 @@ test('detection records presence only and leaves project files alone', () => {
 });
 
 test('applies a Stage Override when installing', () => {
-  const override = path.join(project, '.ourkit', 'overrides', 'stages', 'ourkit-ping', 'SKILL.md');
+  const override = path.join(project, '.ourkit', 'overrides', 'stages', 'ourkit-init', 'SKILL.md');
   fs.mkdirSync(path.dirname(override), { recursive: true });
   fs.writeFileSync(override, 'customized');
   assert.strictEqual(install().status, 0);

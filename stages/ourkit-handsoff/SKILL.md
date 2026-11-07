@@ -18,6 +18,7 @@ Merging and deploying to production are the user's job, in every case (ADR 0010,
 3. **Settle the Tier,** following `.ourkit/kit/core/tier.md`, and add it to the Decision Log. Run `ourkit tier show` for the Stages to follow.
 4. **Go through the Stages in order,** using their skills: `ourkit-spec`, `ourkit-plan`, `ourkit-tasks`, `ourkit-build`, `ourkit-review`, `ourkit-ship`. For a bug, use `ourkit-bugfix` first. For an Epic, use `ourkit-epic`, which stops for the user's answers.
 5. **Run each Gate as you reach it,** and don't go around one.
+6. **Keep going until a PR is open or a stop below applies.** The user asked you to do this without them, so committing, pushing the branch and opening the PR are already approved. Don't end your turn to ask about those, and don't stop after Build or Review. Only merging stays with the user.
 
 ## When you stop
 

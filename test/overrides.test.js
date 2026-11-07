@@ -84,6 +84,6 @@ test('a project with matching or no Overrides passes the check', () => {
 });
 
 test('Stage Overrides are not reported as orphans', () => {
-  write('.ourkit/overrides/stages/ourkit-ping/SKILL.md', 'o');
+  write('.ourkit/overrides/stages/ourkit-init/SKILL.md', 'o');
   assert.deepStrictEqual(orphanOverrides(project), []);
 });
