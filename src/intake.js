@@ -10,6 +10,8 @@ const FACTS = ['authorIsTeam', 'readyLabelPresent', 'readyLabelAppliedByTeam', '
 function decideIntake(facts) {
   const reasons = [];
   for (const fact of FACTS) {
+    // With no label there's nothing to check, so who applied it is not an unknown.
+    if (fact === 'readyLabelAppliedByTeam' && facts.readyLabelPresent === false && facts[fact] === undefined) continue;
     if (typeof facts[fact] !== 'boolean') reasons.push(`couldn't establish "${fact}", so it counts against the ticket`);
   }
   const { authorIsTeam, readyLabelPresent, readyLabelAppliedByTeam, editedByOutsiderAfterReady } = facts;

@@ -73,7 +73,7 @@ function runGate(projectDir, record, name) {
   }
   const { passed, timedOut, output } = runCommand(projectDir, lookup.command);
   const status = passed ? 'pass' : 'fail';
-  return { command: name, status, ...(timedOut ? { reason: 'timed out' } : {}), ...decide(record, status), output: passed ? '' : output };
+  return { command: name, status, ...(timedOut ? { reason: 'timed out' } : {}), ...decide(record, status), output };
 }
 
 function floorGate(record, scope) {

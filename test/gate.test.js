@@ -70,6 +70,15 @@ test('a failing command blocks a Feature and shows the end of its output', () =>
   assert.match(json.output, /broke here/);
 });
 
+test('a passing command shows its output too, so a report can quote real results', () => {
+  profile({ test: 'node -e "console.log(\'tests 3, pass 3\')"' });
+  ourkit('tier', 'set', 'feature', '--reason', 'r');
+  const { status, json } = gate('run', 'test');
+  assert.strictEqual(status, 0);
+  assert.strictEqual(json.status, 'pass');
+  assert.match(json.output, /tests 3, pass 3/);
+});
+
 test('a failing command only reminds on a Patch', () => {
   profile({ lint: FAIL });
   ourkit('tier', 'set', 'patch', '--reason', 'r');

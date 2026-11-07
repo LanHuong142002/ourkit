@@ -66,7 +66,9 @@ test('an outsider\'s edit counts against a team member\'s ticket too', () => {
 
 for (const fact of ['authorIsTeam', 'readyLabelPresent', 'readyLabelAppliedByTeam', 'editedByOutsiderAfterReady']) {
   test(`an unknown ${fact} counts against the ticket`, () => {
-    const { [fact]: removed, ...facts } = TEAM;
+    // Who applied a label only matters when there is one.
+    const known = fact === 'readyLabelAppliedByTeam' ? { ...TEAM, readyLabelPresent: true } : TEAM;
+    const { [fact]: removed, ...facts } = known;
     assert.strictEqual(accepted(facts), false);
     assert.match(reasons(facts), new RegExp(`couldn't establish "${fact}"`));
   });
@@ -75,6 +77,16 @@ for (const fact of ['authorIsTeam', 'readyLabelPresent', 'readyLabelAppliedByTea
     assert.strictEqual(accepted({ ...TEAM, [fact]: 'true' }), false);
   });
 }
+
+test('a team member\'s ticket with no label needs no fact about who applied one', () => {
+  const { readyLabelAppliedByTeam: removed, ...facts } = TEAM;
+  assert.strictEqual(accepted(facts), true, reasons(facts));
+});
+
+test('an outsider\'s ticket with no label is still rejected when that fact is left out', () => {
+  const { readyLabelAppliedByTeam: removed, ...facts } = TEAM;
+  assert.strictEqual(accepted({ ...facts, authorIsTeam: false }), false);
+});
 
 test('an empty set of facts is rejected', () => {
   assert.strictEqual(accepted({}), false);

@@ -20,7 +20,7 @@ Use these for Hands-off intake (`.ourkit/kit/core/intake.md`). A team member is 
   `gh api repos/{owner}/{repo}/issues/<number> --jq .user.login`
   `gh api repos/{owner}/{repo}/collaborators/<login>/permission --jq .permission`
 - **`readyLabelPresent`:** true if the ticket's labels include `ourkit:ready`.
-- **`readyLabelAppliedByTeam`:** find who applied the label most recently, then true if their permission is `admin` or `write`. (The `permission` field reports a maintainer as `write`.)
+- **`readyLabelAppliedByTeam`:** false if the ticket has no such label. Otherwise find who applied the label most recently, then true if their permission is `admin` or `write`. (The `permission` field reports a maintainer as `write`.)
   `gh api repos/{owner}/{repo}/issues/<number>/events --paginate --jq '[.[] | select(.event == "labeled" and .label.name == "ourkit:ready")] | last | .actor.login'`
   `gh api repos/{owner}/{repo}/collaborators/<login>/permission --jq .permission`
 - **`editedByOutsiderAfterReady`:** true if the ticket was edited after the label was applied, by someone without that permission. A ticket written by a team member and never labelled is false unless someone else edited it. Get the edit, and the label's time from the same events call:
@@ -30,16 +30,16 @@ If a command fails, or the person isn't found, leave that fact out of the file.
 
 ## Change status
 
-GitHub Issues has only open and closed, so progress is shown with labels. Remove the previous label when adding the next.
+GitHub Issues has only open and closed, so progress is shown with labels. A ticket has one at a time, so remove whichever others it has.
 
 | Status | Action |
 |---|---|
-| In progress | `gh issue edit <number> --add-label ourkit:in-progress` |
-| In review | `gh issue edit <number> --remove-label ourkit:in-progress --add-label ourkit:in-review` |
-| Blocked | `gh issue edit <number> --add-label ourkit:blocked` |
+| In progress | `gh issue edit <number> --remove-label ourkit:blocked --add-label ourkit:in-progress` |
+| In review | `gh issue edit <number> --remove-label ourkit:in-progress --remove-label ourkit:blocked --add-label ourkit:in-review` |
+| Blocked | `gh issue edit <number> --remove-label ourkit:in-progress --add-label ourkit:blocked` |
 | Done | Nothing to do. Merging a PR that says `Closes #<number>` closes the issue. |
 
-If a label doesn't exist yet, create it once: `gh label create <label> --force`.
+If a command fails because a label doesn't exist yet, create it once and retry: `gh label create <label> --force`.
 
 Never close an issue yourself, because that would claim the work is merged when it isn't.
 
