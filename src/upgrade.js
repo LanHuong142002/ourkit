@@ -2,7 +2,7 @@
 const fs = require('fs');
 const path = require('path');
 const readline = require('readline');
-const { INSTALL_RECORD, hashFile, planFiles } = require('./install');
+const { INSTALL_RECORD, applyInstructions, hashFile, planFiles } = require('./install');
 const { KIT_DIR, OVERRIDES_DIR, orphanOverrides } = require('./overrides');
 
 const STAGES_DIR = path.join('.claude', 'skills');
@@ -79,6 +79,7 @@ function apply(projectDir, state, movable) {
     fs.copyFileSync(source, destination);
     files[toRecordPath(target)] = hashFile(destination);
   }
+  applyInstructions(projectDir);
   const { version } = JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'package.json'), 'utf8'));
   const updated = { ...record, version, files };
   fs.writeFileSync(path.join(projectDir, INSTALL_RECORD), `${JSON.stringify(updated, null, 2)}\n`);

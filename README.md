@@ -79,6 +79,7 @@ The kit enforces what it can in code, but an agent with a shell can't be fully f
 - **Protect your default branch.** "Never merge" is an instruction, backed in a Loop Run by a deny list. Branch protection is what truly enforces it.
 - **Keep production credentials away from where the agent runs.** The rule against production deploys is also an instruction.
 - **Approvals are recorded by the agent,** so the kit can't prove a person said yes.
+- **A plain request reaches the lifecycle through `CLAUDE.md`.** The Installer adds a marked block there, and the agent follows it by judgment, so check it proposed a Tier before it edits.
 - **Sensitive Area detection reads file paths,** then relies on the agent's judgment. It can miss one.
 - **Intake facts are gathered by the agent.** A ticket that misleads the agent at that point could get through.
 - **Model choice for the main session isn't set for you.** ADR 0008 recommends Opus, so choose it with `/model`.
