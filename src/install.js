@@ -17,6 +17,8 @@ const STACK_MARKERS = [
   'build.gradle', 'build.gradle.kts', 'Gemfile', 'composer.json', 'Makefile', 'Dockerfile',
 ];
 const NOT_PROJECT_CODE = ['.git', '.ourkit', '.claude'];
+const INSTRUCTIONS_START = '<!-- ourkit:start: managed by ourkit, and replaced on upgrade. Anything outside this block is yours. -->';
+const INSTRUCTIONS_END = '<!-- ourkit:end -->';
 
 const toRecordPath = (p) => p.replace(/\\/g, '/');
 
@@ -118,6 +120,27 @@ function planFiles(projectDir, roles, tracker) {
   return plan;
 }
 
+// The one thing a Host loads in every session. Without it, a plain request never reaches the
+// lifecycle, so no Tier, Gate or Sensitive Area floor applies. Only the marked block is the kit's.
+function applyInstructions(projectDir) {
+  const hostDir = path.join(KIT_ROOT, 'hosts', HOST);
+  const { instructionsFile } = JSON.parse(fs.readFileSync(path.join(hostDir, 'shell.json'), 'utf8'));
+  if (!instructionsFile) return null;
+  const text = fs.readFileSync(path.join(hostDir, 'instructions.md'), 'utf8').replace(/\r\n/g, '\n').trim();
+  const block = `${INSTRUCTIONS_START}\n${text}\n${INSTRUCTIONS_END}`;
+  const file = path.join(projectDir, instructionsFile);
+  const existing = fs.existsSync(file) ? fs.readFileSync(file, 'utf8') : '';
+  // Matched by its opening alone, so a later version can reword the marker.
+  const start = existing.indexOf('<!-- ourkit:start');
+  const end = existing.indexOf(INSTRUCTIONS_END);
+  let updated;
+  if (start >= 0 && end > start) updated = existing.slice(0, start) + block + existing.slice(end + INSTRUCTIONS_END.length);
+  else if (existing.trim()) updated = `${existing.trimEnd()}\n\n${block}\n`;
+  else updated = `${block}\n`;
+  fs.writeFileSync(file, updated);
+  return instructionsFile;
+}
+
 function install(projectDir, { entry, roles }) {
   if (fs.existsSync(path.join(projectDir, INSTALL_RECORD))) {
     return { error: `ourkit is already installed in ${projectDir}; use upgrade to update it` };
@@ -130,6 +153,7 @@ function install(projectDir, { entry, roles }) {
   }
   const detected = STACK_MARKERS.filter((name) => fs.existsSync(path.join(projectDir, name)));
   const files = copyPlanned(projectDir, plan);
+  applyInstructions(projectDir);
   const { version } = JSON.parse(fs.readFileSync(path.join(KIT_ROOT, 'package.json'), 'utf8'));
   const record = { version, host: HOST, entry, roles, detected, files };
   fs.writeFileSync(path.join(projectDir, INSTALL_RECORD), `${JSON.stringify(record, null, 2)}\n`);
@@ -202,4 +226,4 @@ async function main(args) {
   return 0;
 }
 
-module.exports = { INSTALL_RECORD, KIT_ROOT, copyPlanned, hashFile, install, main, parseRoles, planFiles, trackerPlan };
+module.exports = { INSTALL_RECORD, KIT_ROOT, applyInstructions, copyPlanned, hashFile, install, main, parseRoles, planFiles, trackerPlan };

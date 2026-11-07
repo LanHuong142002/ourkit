@@ -2,6 +2,7 @@
   "host": "claude-code",
   "stagesDir": ".claude/skills",
   "agentsDir": ".claude/agents",
+  "instructionsFile": "CLAUDE.md",
   "session": {
     "command": "claude",
     "args": ["-p", "--output-format", "stream-json", "--verbose", "--model", "opus", "--settings", ".ourkit/kit/host/session-settings.json"],
