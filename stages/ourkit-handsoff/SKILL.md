@@ -24,7 +24,7 @@ Merging and deploying to production are the user's job, in every case (ADR 0010,
 
 **A change touching a Sensitive Area, or needing the user to act on a service, stops twice** (ADR 0012). If the work needs the user to do something on a service, such as creating a token or changing a setting, record it with `ourkit handsoff needs-service "<what>"`.
 
-1. **After Plan:** `ourkit gate approval` blocks. Show the plan and what you've decided so far, then stop. So no tokens go in the wrong direction, write nothing until the user approves. Then run `ourkit gate approve-plan`.
+1. **After Plan:** `ourkit gate approval` blocks. Commit and push the branch so the user can read the plan from anywhere, show the plan and what you've decided so far, then stop. So no tokens go in the wrong direction, write nothing until the user approves. Then run `ourkit gate approve-plan`.
 2. **Before Ship:** `ourkit gate ship` blocks. Show what was built and reviewed, then stop. After the user approves, run `ourkit gate approve-ship`.
 
 Run an approval command only after the user has said they approve, and never on their behalf. A later session may pick up here, so run `ourkit handsoff status` and `ourkit tier show` to see where things stand, and carry on from the Gate that's blocking.
