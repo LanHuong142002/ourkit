@@ -100,3 +100,18 @@ test('the Stage gates on approval, delegates, and never pushes', () => {
     assert.ok(stage.includes(required), required);
   }
 });
+
+test('sessions run the project\'s checks through the Gate, since their permissions deny the commands themselves', () => {
+  const settings = JSON.parse(fs.readFileSync(path.join(KIT_ROOT, 'hosts', 'claude-code', 'session-settings.json'), 'utf8'));
+  assert.ok(settings.permissions.allow.includes('Bash(node .ourkit/kit/bin/ourkit.js*)'));
+  assert.ok(!settings.permissions.allow.some((rule) => /npm|yarn|pnpm/.test(rule)));
+  for (const file of [
+    ['hosts', 'claude-code', 'agents', 'ourkit-implementer.md'],
+    ['hosts', 'claude-code', 'agents', 'ourkit-runner.md'],
+    ['stages', 'ourkit-build', 'SKILL.md'],
+    ['stages', 'ourkit-tasks', 'SKILL.md'],
+    ['stages', 'ourkit-handsoff', 'SKILL.md'],
+  ]) {
+    assert.match(fs.readFileSync(path.join(KIT_ROOT, ...file), 'utf8'), /gate run <(test\|lint\|build|name)>/, file.join('/'));
+  }
+});
