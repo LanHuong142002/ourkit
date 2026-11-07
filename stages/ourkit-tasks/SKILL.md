@@ -31,7 +31,7 @@ Verify: how to confirm this task worked
 
 - **Keep each task small and whole.** One subagent should finish it in one go, with its tests, leaving the project working.
 - **State dependencies honestly.** `Depends on:` lists the task numbers that must finish first, or `none`. Tasks with no dependency between them are independent. A Loop Run relies on this to skip a stuck task and carry on with others (ADR 0009), so don't add dependencies just for ordering.
-- **Make each one checkable.** `Verify:` says how to confirm it worked, such as a test that passes. If only the user can check it, say so, because it will become part of the Test Handoff.
+- **Make each one checkable.** `Verify:` says how to confirm it worked, such as a test that passes. Write a check of the project's tests, lint or build as `ourkit gate run <name>`, not as the command itself. If only the user can check it, say so, because it will become part of the Test Handoff.
 - **Cover the plan exactly.** Every requirement in the spec should be reached by some task, and no task should add anything the plan doesn't ask for.
 
 Then run `ourkit gate artifact tasks`, and fix any problem it reports.
