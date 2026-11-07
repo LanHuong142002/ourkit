@@ -97,3 +97,9 @@ test('the Stage grills first, needs the user, and waits before creating tickets'
     assert.ok(stage.includes(required), required);
   }
 });
+
+test('the Epic file is pushed before tickets link to it', () => {
+  const stage = fs.readFileSync(path.join(KIT_ROOT, 'stages', 'ourkit-epic', 'SKILL.md'), 'utf8');
+  assert.ok(stage.indexOf('commit and push the branch with the Epic file') < stage.indexOf('create the tickets through it'));
+  assert.ok(stage.includes('full URL'));
+});

@@ -108,10 +108,12 @@ test('sessions run the project\'s checks through the Gate, since their permissio
   for (const file of [
     ['hosts', 'claude-code', 'agents', 'ourkit-implementer.md'],
     ['hosts', 'claude-code', 'agents', 'ourkit-runner.md'],
+    ['hosts', 'claude-code', 'agents', 'ourkit-reviewer.md'],
+    ['hosts', 'claude-code', 'agents', 'ourkit-sensitive-reviewer.md'],
     ['stages', 'ourkit-build', 'SKILL.md'],
     ['stages', 'ourkit-tasks', 'SKILL.md'],
     ['stages', 'ourkit-handsoff', 'SKILL.md'],
   ]) {
-    assert.match(fs.readFileSync(path.join(KIT_ROOT, ...file), 'utf8'), /gate run <(test\|lint\|build|name)>/, file.join('/'));
+    assert.match(fs.readFileSync(path.join(KIT_ROOT, ...file), 'utf8'), /gate run (test|<(test|lint|build|name)>)/\|lint\|build|name)>/, file.join('/'));
   }
 });
