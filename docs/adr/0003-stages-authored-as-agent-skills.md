@@ -1,5 +1,5 @@
 ---
-status: accepted (amended 2026-11-07: the Claude Code Host Shell installs into the project's `.claude/` and doesn't use a plugin manifest)
+status: accepted (amended 2026-11-07: the Claude Code Host Shell installs into the project's `.claude/` and doesn't use a plugin manifest; Bug-fix is one skill)
 ---
 
 # Each Stage is written to the Agent Skills standard and wrapped in the Claude Code Host Shell
@@ -10,3 +10,7 @@ v1 runs only on Claude Code, but each Stage is a standard Agent Skills folder (`
 
 - Writing directly in Claude's plugin format: fastest, but extending later would require a converter.
 - A neutral source plus a build step generating each agent's format: most flexible, but costly in v1 with only one target.
+
+## Amendment
+
+Reproduce, Fix and Verify are written as one skill, `ourkit-bugfix`, because they always run together and in order. Splitting them would add folders without adding a choice for the user.

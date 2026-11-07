@@ -1,5 +1,5 @@
 ---
-status: accepted (amended 2026-11-07: automatically fixing post-deploy bugs waits for Release 2)
+status: accepted (amended 2026-11-07: automatically fixing post-deploy bugs waits for Release 2; an Epic stops in Hands-off)
 ---
 
 # Two Modes, Pair and Hands-off; a ticket is data, not a command
@@ -12,3 +12,7 @@ Because Hands-off doesn't wait for plan approval, ticket content is treated only
 
 - Hands-off waits for plan approval on every ticket (the first version of ADR 0009): safer, but a whole backlog can't be handed over at once.
 - Hands-off as the default: faster, but mistakenly using Hands-off costs more than mistakenly using Pair.
+
+## Amendment
+
+An Epic stops for the user's answers even in Hands-off, rather than settling them in the Decision Log. An Epic's questions decide what gets built, so they aren't the small calls Hands-off is meant to make on its own.
