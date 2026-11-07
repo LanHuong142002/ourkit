@@ -46,6 +46,12 @@ if (item.includes('noresult')) {
   respond('I did some work but never said how it ended.');
   process.exit(0);
 }
+if (item.includes('needssetup')) {
+  fs.mkdirSync('.ourkit', { recursive: true });
+  fs.writeFileSync('.ourkit/pending.json', '[{"id":1,"text":"Install a tool"}]\n');
+  respond(`${SUMMARY}\nOURKIT-RESULT: blocked`);
+  process.exit(0);
+}
 if (item.includes('dirtymain')) {
   fs.writeFileSync('left-behind.txt', 'x');
   respond(`${SUMMARY}\nOURKIT-RESULT: blocked`);

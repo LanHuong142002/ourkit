@@ -30,10 +30,16 @@
       "Bash(git merge*)",
       "Bash(git push origin main*)",
       "Bash(git push origin master*)",
+      "Bash(git push -u origin main*)",
+      "Bash(git push -u origin master*)",
+      "Bash(git push *:main*)",
+      "Bash(git push *:master*)",
       "Bash(git push --force*)",
       "Bash(git push -f*)",
       "Bash(gh pr merge*)",
-      "Bash(gh issue close*)"
+      "Bash(gh api *merge*)",
+      "Bash(gh issue close*)",
+      "Bash(gh issue delete*)"
     ]
   }
 }

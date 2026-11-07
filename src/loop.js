@@ -7,7 +7,8 @@ const { REPORT_PATH, writeReport } = require('./run-report');
 
 const LOOP_PATH = path.join('.ourkit', 'loop.json');
 const SHELL_PATH = path.join('.ourkit', 'kit', 'host', 'shell.json');
-const CARRIED = [path.join('.ourkit', 'lessons.md'), path.join('.ourkit', 'project-log.md')];
+// The setup list isn't context, but it's for the user, so it must not vanish with a ticket's branch.
+const CARRIED = [path.join('.ourkit', 'lessons.md'), path.join('.ourkit', 'project-log.md'), path.join('.ourkit', 'pending.json')];
 const SUMMARY_LINES = 5;
 const OUTCOMES = ['shipped', 'stopped', 'blocked', 'rejected'];
 const LIMIT_THRESHOLD = 0.9;
@@ -239,7 +240,7 @@ async function runLoop(projectDir, loop, options = {}) {
     const branch = onBranch && onBranch !== main ? onBranch : null;
     const back = returnToDefault(projectDir, main);
     if (back.error) {
-      loop.results.push({ item, branch, outcome: 'unknown', summary: back.error });
+      loop.results.push({ item, branch, outcome: parsed.outcome, summary: [back.error, parsed.summary].filter(Boolean).join('\n') });
       loop.queue.shift();
       return stop('dirty-tree');
     }
