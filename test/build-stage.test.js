@@ -114,6 +114,6 @@ test('sessions run the project\'s checks through the Gate, since their permissio
     ['stages', 'ourkit-tasks', 'SKILL.md'],
     ['stages', 'ourkit-handsoff', 'SKILL.md'],
   ]) {
-    assert.match(fs.readFileSync(path.join(KIT_ROOT, ...file), 'utf8'), /gate run (test|<(test|lint|build|name)>)/\|lint\|build|name)>/, file.join('/'));
+    assert.match(fs.readFileSync(path.join(KIT_ROOT, ...file), 'utf8'), /gate run (test|<(test\|lint\|build|name)>)/, file.join('/'));
   }
 });
