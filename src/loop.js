@@ -16,11 +16,15 @@ const WAIT_MARGIN_MS = 60 * 1000;
 // A seven-day window can be days away. A process shouldn't sit waiting that long, so it stops instead.
 const MAX_WAIT_MS = 6 * 3600 * 1000;
 
-const promptFor = (item) => `/ourkit-handsoff ${item}
+const promptFor = (item, resumeBranch) => `/ourkit-handsoff ${item}
 
 You are one ticket in a Loop Run, with no one watching, so never wait for a reply. Run each shell command on its own, without chaining commands or changing directory, because permissions are checked per command and a refused command can't be retried by anyone. When you stop or finish, end your final message with exactly ${SUMMARY_LINES} lines summarizing what happened, then one last line:
 OURKIT-RESULT: shipped, stopped, blocked or rejected
-Use shipped if a PR is open, stopped if it's waiting for the user's approval or answers, blocked if you can't make progress, and rejected if the ticket failed intake.`;
+Use shipped if a PR is open, stopped if it's waiting for the user's approval or answers, blocked if you can't make progress, and rejected if the ticket failed intake.${resumeBranch ? resumeNote(resumeBranch) : ''}`;
+
+const resumeNote = (branch) => `
+
+An earlier session on this ticket ended before it finished, and its work is saved on the branch \`${branch}\`, which is checked out for you. Carry on from where it stopped, starting with \`ourkit handsoff status\`, rather than starting again.`;
 
 function git(projectDir, args) {
   const result = spawnSync('git', args, { cwd: projectDir, encoding: 'utf8' });
@@ -171,6 +175,29 @@ function returnToDefault(projectDir, main) {
   return {};
 }
 
+// Moves to a ticket's saved branch, taking the carried files along. They're uncommitted on the
+// default branch and may be committed on the ticket's branch too, so git can't switch with them in place.
+function switchCarrying(projectDir, branch) {
+  const carried = CARRIED.map((relative) => {
+    const file = path.join(projectDir, relative);
+    return { relative, file, content: fs.existsSync(file) ? fs.readFileSync(file) : null };
+  });
+  for (const { relative, file, content } of carried) {
+    if (content === null) continue;
+    const tracked = git(projectDir, ['ls-files', '--error-unmatch', '--', relative.replace(/\\/g, '/')]).ok;
+    if (tracked) git(projectDir, ['checkout', '-q', '--', relative.replace(/\\/g, '/')]);
+    else fs.rmSync(file);
+  }
+  const switched = git(projectDir, ['switch', '-q', branch]).ok;
+  for (const { file, content } of carried) {
+    if (content !== null) {
+      fs.mkdirSync(path.dirname(file), { recursive: true });
+      fs.writeFileSync(file, content);
+    }
+  }
+  return switched;
+}
+
 // On timeout the whole process tree must go. Killing only the shell would leave an agent
 // running unattended and past its Budget, which is exactly what the Budget exists to prevent.
 function killTree(child) {
@@ -231,7 +258,13 @@ async function runLoop(projectDir, loop, options = {}) {
     if (!budgetLeft(loop)) return stop('budget');
     const item = loop.queue[0];
     const started = Date.now();
-    const result = await runSession(session, projectDir, promptFor(item), sessionTimeout(loop));
+    // Recorded first, so a run killed mid-session can tell which ticket it left half done.
+    loop.running = item;
+    writeLoop(projectDir, loop);
+    const wanted = loop.resume && loop.resume.item === item ? loop.resume.branch : null;
+    const resumeBranch = wanted && switchCarrying(projectDir, wanted) ? wanted : null;
+    const result = await runSession(session, projectDir, promptFor(item, resumeBranch), sessionTimeout(loop));
+    delete loop.running;
     loop.usedMs += Date.now() - started;
     const parsed = parseSession(result.stdout);
     loop.usedTokens += parsed.tokens;
@@ -239,6 +272,8 @@ async function runLoop(projectDir, loop, options = {}) {
     const onBranch = git(projectDir, ['branch', '--show-current']).output;
     const branch = onBranch && onBranch !== main ? onBranch : null;
     const back = returnToDefault(projectDir, main);
+    // A ticket that stays queued keeps its branch, so the next session carries on there.
+    loop.resume = branch ? { item, branch } : resumeBranch ? loop.resume : undefined;
     if (back.error) {
       loop.results.push({ item, branch, outcome: parsed.outcome, summary: [back.error, parsed.summary].filter(Boolean).join('\n') });
       loop.queue.shift();
@@ -254,6 +289,7 @@ async function runLoop(projectDir, loop, options = {}) {
     if (!failed) {
       loop.results.push({ item, branch, outcome: parsed.outcome, summary: parsed.summary });
       loop.queue.shift();
+      delete loop.resume;
     }
     writeLoop(projectDir, loop);
     if (!parsed.limit) continue;
@@ -319,6 +355,18 @@ async function main(args) {
     return 2;
   }
   const main_ = defaultBranch(projectDir);
+  const current = git(projectDir, ['branch', '--show-current']).output;
+  if (items.length === 0 && loop.running && main_ && current && current !== main_) {
+    // The last run was killed mid-session, so its work is saved where a finished session's would be.
+    const back = returnToDefault(projectDir, main_);
+    if (back.error) {
+      console.error(`ourkit: ${back.error}`);
+      return 1;
+    }
+    loop.resume = { item: loop.running, branch: current };
+    console.log(`ourkit: the last run stopped during ${loop.running}, so its work is saved on ${current} and that ticket carries on there.`);
+  }
+  delete loop.running;
   if (main_ && git(projectDir, ['branch', '--show-current']).output !== main_) {
     console.error(`ourkit: start a Loop Run from ${main_}, because each ticket branches from it`);
     return 1;

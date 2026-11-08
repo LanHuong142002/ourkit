@@ -12,7 +12,7 @@ node .ourkit/kit/bin/ourkit.js loop run --hours 4 42 43 44
 
 The kit's command coordinates, not an agent. For each ticket it starts a fresh session on the `ourkit-handsoff` Stage, then keeps only a five-line summary. That keeps the tenth ticket costing about the same as the first (ADR 0011). Only Lessons and the Project Log carry to the next ticket.
 
-Each ticket's work stays on its own branch. A session that stops midway has its work saved on that branch, so nothing is lost.
+Each ticket's work stays on its own branch. A session that stops midway has its work saved on that branch, so nothing is lost. A ticket that stays queued, because its session failed or the run was killed, carries on from that branch the next time, rather than starting again. After a killed run, `ourkit loop run` saves what was left uncommitted and goes back to the default branch by itself.
 
 ## When it stops
 

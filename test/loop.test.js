@@ -267,3 +267,37 @@ test('a blocking finding gets at most two fix attempts', () => {
   assert.match(third.stderr, /ADR 0009/);
   assert.strictEqual(ourkit('review', 'attempt', '9').status, 1);
 });
+
+test('a run killed mid-session saves the ticket\'s work, and the next run carries on from its branch', () => {
+  loop('run', '--hours', '1', 'stopped-1');
+  // What a killed run leaves behind: the session's branch checked out, its work uncommitted, the ticket still queued.
+  git('switch', '-q', '-c', 'ticket-t1');
+  fs.writeFileSync(path.join(project, 'half-done.txt'), 'keep me');
+  const file = path.join(project, '.ourkit', 'loop.json');
+  fs.writeFileSync(file, JSON.stringify({ ...state(), queue: ['t1'], running: 't1', stopped: null }));
+
+  const result = loop('run');
+  assert.strictEqual(result.status, 0, result.stderr);
+  assert.match(result.stdout, /stopped during t1, so its work is saved on ticket-t1/);
+  assert.deepStrictEqual(sessions(), ['stopped-1', 't1', 'resumed ticket-t1']);
+  assert.ok(onBranch('ticket-t1', 'half-done.txt'), 'the killed session\'s work was kept');
+  assert.ok(onBranch('ticket-t1', 'work-t1.txt'), 'the next session finished on the same branch');
+  assert.strictEqual(git('branch', '--show-current'), 'main');
+  assert.strictEqual(state().running, undefined);
+  assert.strictEqual(state().resume, undefined);
+});
+
+test('a ticket kept queued after its session fails carries on from its branch next time', () => {
+  loop('run', '--hours', '1', 'flaky', 't2');
+  const queued = state();
+  assert.strictEqual(queued.stopped, 'waiting-for-limit');
+  assert.deepStrictEqual(queued.queue, ['flaky', 't2']);
+  assert.deepStrictEqual(queued.resume, { item: 'flaky', branch: 'ticket-flaky' });
+  assert.strictEqual(queued.running, undefined, 'a session that ended is not left marked as running');
+
+  assert.strictEqual(loop('run').status, 0);
+  assert.deepStrictEqual(sessions(), ['flaky', 'flaky', 'resumed ticket-flaky', 't2']);
+  assert.ok(onBranch('ticket-flaky', 'half-done.txt'));
+  assert.ok(onBranch('ticket-flaky', 'work-flaky.txt'));
+  assert.ok(!onBranch('ticket-t2', 'half-done.txt'));
+});
