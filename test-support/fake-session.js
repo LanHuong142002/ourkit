@@ -58,8 +58,18 @@ if (item.includes('dirtymain')) {
   process.exit(0);
 }
 
-const branch = `ticket-${item}`;
-git('switch', '-q', '-c', branch);
+const resumed = prompt.match(/saved on the branch `([^`]+)`/);
+const branch = resumed ? resumed[1] : `ticket-${item}`;
+if (resumed) fs.appendFileSync(process.env.FAKE_SESSION_LOG, `resumed ${branch}
+`);
+if (!resumed) git('switch', '-q', '-c', branch);
+// Fails at the plan's limit partway through, the first time only.
+if (item.includes('flaky') && !resumed) {
+  fs.writeFileSync('half-done.txt', 'keep me');
+  rateEvent(1, inSeconds(3600), 'rejected');
+  console.log(JSON.stringify({ type: 'result', result: 'You have hit your limit', is_error: true, usage: {} }));
+  process.exit(1);
+}
 fs.mkdirSync('.ourkit', { recursive: true });
 
 // Each session sees what earlier ones carried over, and adds to it.

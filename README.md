@@ -84,6 +84,7 @@ The kit enforces what it can in code, but an agent with a shell can't be fully f
 - **Intake facts are gathered by the agent.** A ticket that misleads the agent at that point could get through.
 - **Model choice for the main session isn't set for you.** ADR 0008 recommends Opus, so choose it with `/model`.
 - **Usage data comes from an undocumented Claude Code event.** If it changes, a Loop Run loses its early pause and works the same otherwise.
+- **On Windows, `upgrade` can leave kit files showing as modified** with no change in content, because of line endings. `git add -A` clears it, and a Loop Run needs a clean tree to start.
 
 ## Repo layout
 

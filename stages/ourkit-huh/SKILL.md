@@ -19,7 +19,7 @@ Run `ourkit tier show`. If `sensitiveAreas` lists anything, use the `ourkit-sens
    - Grade by whether they understand it, not whether they used the same words.
    - If an answer is wrong or partly wrong, explain it again by pointing at the code, and run `ourkit teachback miss "<question>" "<what they misunderstood>"`.
    - The user can skip the Teach-back. If they do, don't press, and record nothing.
-4. **Finish** by saying what they've got and what to look at again, if anything.
+4. **Finish** by saying what they've got and what to look at again, if anything. If you recorded a miss, commit the Change Report on the change's branch so it isn't left behind, and push it if the branch is already pushed.
 
 `teachback miss` writes to the Change Report. A Patch has no Change Report, so nothing is recorded for one, which the command will tell you.
 

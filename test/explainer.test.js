@@ -88,7 +88,7 @@ test('the Stage covers summary, questions and Teach-back, and Pair suggests it',
   const order = ['Open with the summary', 'Answer questions', 'Run the Teach-back'].map((text) => stage.indexOf(text));
   assert.ok(order.every((position) => position >= 0));
   assert.deepStrictEqual(order, [...order].sort((a, b) => a - b));
-  for (const required of ['ourkit-sensitive-explainer', 'ourkit teachback miss', 'explain it again']) {
+  for (const required of ['ourkit-sensitive-explainer', 'ourkit teachback miss', 'explain it again', 'commit the Change Report']) {
     assert.ok(stage.includes(required), required);
   }
   assert.match(read('stages/ourkit-review/SKILL.md'), /In Pair, also suggest.*\/ourkit-huh/);
