@@ -43,3 +43,5 @@ Include only what you truly can't check. Handle everything else yourself.
 ## Reporting
 
 End with a report the user can act on without having been here: the PR's link, the Decision Log, the open Question Batch, non-blocking findings, the Test Handoff, and what's waiting for them. Report only results you actually observed, and say plainly what wasn't run.
+
+End the report with the Next line (`.ourkit/kit/core/next-step.md`): at the stop after Plan, the user reading and approving the plan; at the stop before Ship, the user approving what was built; once the PR is open, the user answering the Question Batch, following the Test Handoff, and reviewing and merging the PR.

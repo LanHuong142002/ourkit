@@ -32,7 +32,7 @@ afterEach(() => {
 });
 
 test('with no Tracker Pack, status says so and nothing is required', () => {
-  assert.deepStrictEqual(status(), { pack: null, operations: null, ticket: null });
+  assert.deepStrictEqual(status(), { pack: null, operations: null, ticket: null, progress: null, board: null });
 });
 
 test('status points to the operations file of the installed pack', () => {
@@ -54,10 +54,42 @@ test('status works with no project records at all', () => {
   try {
     const result = spawnSync(process.execPath, [BIN, 'tracker', 'status'], { cwd: empty, encoding: 'utf8' });
     assert.strictEqual(result.status, 0, result.stderr);
-    assert.deepStrictEqual(JSON.parse(result.stdout), { pack: null, operations: null, ticket: null });
+    assert.deepStrictEqual(JSON.parse(result.stdout), { pack: null, operations: null, ticket: null, progress: null, board: null });
   } finally {
     fs.rmSync(empty, { recursive: true, force: true });
   }
+});
+
+test('progress shows with labels by default, and can change', () => {
+  ourkit('tracker', 'add', 'github');
+  assert.strictEqual(status().progress, 'labels');
+  assert.strictEqual(ourkit('tracker', 'progress', 'project').status, 0);
+  assert.strictEqual(status().progress, 'project');
+  assert.strictEqual(ourkit('tracker', 'progress', 'board').status, 2);
+  assert.strictEqual(status().progress, 'project');
+});
+
+test('a Project board is saved with its columns, and a missing column is left out', () => {
+  ourkit('tracker', 'add', 'github', '--progress', 'both');
+  assert.strictEqual(status().board, null);
+  const saved = ourkit('tracker', 'board', 'acme', '3', '--in-progress', 'In Progress', '--in-review', 'In Review');
+  assert.strictEqual(saved.status, 0, saved.stderr);
+  assert.match(saved.stdout, /no column for blocked/);
+  assert.deepStrictEqual(status().board, {
+    owner: 'acme', number: 3, field: 'Status', columns: { 'in-progress': 'In Progress', 'in-review': 'In Review', blocked: null },
+  });
+  assert.strictEqual(status().progress, 'both');
+  assert.strictEqual(ourkit('tracker', 'board', 'acme', 'three').status, 2);
+  assert.strictEqual(ourkit('tracker', 'board').status, 2);
+});
+
+test('broken tracker settings fall back to labels and say so', () => {
+  ourkit('tracker', 'add', 'github', '--progress', 'project');
+  fs.writeFileSync(path.join(project, '.ourkit/tracker.json'), '{ nope');
+  const { progress, problem } = status();
+  assert.strictEqual(progress, 'labels');
+  assert.match(problem, /isn't valid JSON/);
+  assert.strictEqual(ourkit('tracker', 'progress', 'both').status, 1);
 });
 
 test('rejects bad usage', () => {

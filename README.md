@@ -20,7 +20,7 @@ flowchart LR
 
 You need Claude Code, plus Node 18 or later for the install. Each word in **bold** below is explained the first time it shows up.
 
-**Jump to:** [Set it up](#set-it-up) · [Cheat sheet](#cheat-sheet) · [A normal change, step by step](#a-normal-change-step-by-step) · [Bugs, small fixes and huge things](#bugs-small-fixes-and-huge-things) · [Let it work without you](#let-it-work-without-you) · [Make it yours](#make-it-yours) · [Things to know](#things-to-know)
+**Jump to:** [Set it up](#set-it-up) · [Cheat sheet](#cheat-sheet) · [A normal change, step by step](#a-normal-change-step-by-step) · [Bugs, small fixes and huge things](#bugs-small-fixes-and-huge-things) · [Let it work without you](#let-it-work-without-you) · [Tickets and Project boards](#tickets-and-project-boards) · [Make it yours](#make-it-yours) · [Things to know](#things-to-know)
 
 ## Set it up
 
@@ -48,7 +48,7 @@ Don't like questions? `--entry new|existing --roles backend,frontend|full-stack|
 
 **4. Optional extras:**
 
-- Tickets live in GitHub Issues? `npx github:LanHuong142002/ourkit tracker add github`
+- Tickets live in GitHub Issues? `npx github:LanHuong142002/ourkit tracker add github`. It asks where progress should show: labels on the issue, the Status column of a GitHub Project board, or both. See [Tickets and Project boards](#tickets-and-project-boards).
 - Want your own look instead of the usual AI one? `/ourkit-design`
 - House rules for your project? Write them in `.ourkit/rules.md`
 
@@ -57,6 +57,10 @@ Don't like questions? `--entry new|existing --roles backend,frontend|full-stack|
 ## Cheat sheet
 
 Normally you don't call these yourself. Describe what you want and ourkit runs the right ones in order. Call one by hand to start from a specific step, or to pick up where a session stopped.
+
+A normal change runs `/ourkit-spec` → `/ourkit-plan` → `/ourkit-tasks` → `/ourkit-build` → `/ourkit-review` → `/ourkit-ship`. The rest are for bugs, big changes, design and working without you.
+
+You don't have to memorise this: whenever a skill stops or finishes, it ends with a **Next:** line naming the skill to run and whether it's waiting for you.
 
 | Skill | Use it when | What it does | Then |
 |---|---|---|---|
@@ -93,7 +97,13 @@ First ourkit sizes it and asks you to confirm:
 
 **Risky** means sign-in and permissions, data, database structure, money, or a public API. Anything touching those is at least a Feature, even a one-line change, and you can't talk it down. Our example touches sign-in, so it's a Feature.
 
-Each step saves its work in `.ourkit/`, so a later session can pick up where this one stopped. Each step also has a **checkpoint**: it won't move on while a file is incomplete or a test fails.
+A Feature then goes through six skills, in this order. ourkit moves to the next one by itself; you step in at ✋:
+
+```
+/ourkit-spec → /ourkit-plan → ✋ approve → /ourkit-tasks → /ourkit-build → /ourkit-review → /ourkit-ship → ✋ merge
+```
+
+If a session stops part way, run the next skill in the chain yourself and it picks up from there. Each step saves its work in `.ourkit/`, so a later session can pick up where this one stopped. Each step also has a **checkpoint**: it won't move on while a file is incomplete or a test fails.
 
 ### 1. Spec: "what exactly do you want?"
 
@@ -191,6 +201,28 @@ On Windows, Git Bash sometimes can't find `gh`. If a session complains, add this
 ```
 export PATH="$PATH:/c/Program Files/GitHub CLI"
 ```
+
+## Tickets and Project boards
+
+Once the GitHub pack is installed, ourkit updates a ticket as the work moves: in progress at Spec, blocked when it gets stuck, in review when the PR opens. It never closes a ticket; merging the PR does that.
+
+You choose where that progress shows:
+
+| Option | What moves |
+|---|---|
+| `labels` (default) | Labels on the issue: `ourkit:in-progress`, `ourkit:in-review`, `ourkit:blocked` |
+| `project` | The card's Status column on a GitHub Project board |
+| `both` | Both of the above |
+
+Change it any time with `node .ourkit/kit/bin/ourkit.js tracker progress <labels|project|both>`. The choice lives in `.ourkit/tracker.json`, which belongs to your project, so commit it and upgrades leave it alone.
+
+**For a Project board:**
+
+1. Give `gh` access to Projects once: `gh auth refresh -s project`.
+2. The first time ourkit updates a ticket, it lists your boards, matches "in progress", "in review" and "blocked" to your columns, and asks you to confirm. A status with no matching column just doesn't move the card.
+3. When the PR merges and closes the issue, the board's built-in "Item closed" workflow moves the card to Done. Turn that workflow on in the board's settings if it's off.
+
+In Hands-off, ourkit won't guess a board. It uses labels for now and leaves you a note to pick one.
 
 ## Make it yours
 

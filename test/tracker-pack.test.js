@@ -91,6 +91,24 @@ test('a project has no Tracker Pack until one is added, then upgrade keeps it', 
   assert.strictEqual(record().tracker, 'github');
 });
 
+test('tracker add records where progress shows, and upgrade leaves that alone', () => {
+  run('--entry', 'greenfield', '--roles', 'none');
+  const added = run('tracker', 'add', 'github', '--progress', 'project');
+  assert.strictEqual(added.status, 0, added.stderr);
+  assert.match(added.stdout, /gh auth refresh -s project/);
+  const settings = () => JSON.parse(fs.readFileSync(path.join(root, '.ourkit/tracker.json'), 'utf8'));
+  assert.deepStrictEqual(settings(), { progress: 'project' });
+  assert.ok(!('.ourkit/tracker.json' in record().files), 'the settings belong to the project, not the kit');
+  assert.strictEqual(run('upgrade').status, 0);
+  assert.deepStrictEqual(settings(), { progress: 'project' });
+});
+
+test('tracker add without a terminal or a choice uses labels', () => {
+  run('--entry', 'greenfield', '--roles', 'none');
+  assert.strictEqual(run('tracker', 'add', 'github').status, 0);
+  assert.strictEqual(JSON.parse(fs.readFileSync(path.join(root, '.ourkit/tracker.json'), 'utf8')).progress, 'labels');
+});
+
 test('a Tracker Pack is not loaded as rules, so it costs no context until used', () => {
   run('--entry', 'greenfield', '--roles', 'none');
   run('tracker', 'add', 'github');

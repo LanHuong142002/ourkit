@@ -40,3 +40,5 @@ Deliver the reviewed change as a clear PR, so the user can decide whether to mer
 ## Handing over
 
 Tell the user the PR's link, what they still need to check, and that merging is up to them.
+
+End with the Next line (`.ourkit/kit/core/next-step.md`): the user reviews and merges the PR, then `/ourkit-deploy` to try it on staging, if they want.
