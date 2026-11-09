@@ -1,9 +1,9 @@
-// `sync`: rebuilds the files the kit copied, which git doesn't keep, from the committed install
-// record (ADR 0014). It runs after cloning, and after a teammate adds an Override.
+// `sync`: rebuilds the files the kit copied from the install record, with Overrides applied.
+// It restores deleted copies and applies an Override without waiting for an upgrade.
 const fs = require('fs');
 const path = require('path');
 const {
-  INSTALL_RECORD, applyGitignore, copyPlanned, hashFile, kitVersion, planFiles, syncCommand,
+  INSTALL_RECORD, copyPlanned, hashFile, kitVersion, planFiles, syncCommand,
 } = require('./install');
 
 const toRecordPath = (p) => p.replace(/\\/g, '/');
@@ -39,7 +39,6 @@ function sync(projectDir) {
     };
   }
   const files = copyPlanned(projectDir, plan);
-  applyGitignore(projectDir);
   // Written only when an Override changed something, so a plain sync leaves git clean.
   const updated = `${JSON.stringify({ ...record, files }, null, 2)}\n`;
   if (updated.replace(/\r\n/g, '\n') !== text.replace(/\r\n/g, '\n')) fs.writeFileSync(recordFile, updated);

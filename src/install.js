@@ -1,17 +1,19 @@
 // Installer: asks its questions, copies the kit and records what it did.
-// Deterministic by design (ADR 0005): inference is left to Init. What it copies stays out of
-// git, and `sync` rebuilds it from the install record (ADR 0014).
+// Deterministic by design (ADR 0005): inference is left to Init. What it copies is committed,
+// so a teammate needs nothing after cloning (ADR 0014).
 const crypto = require('crypto');
 const fs = require('fs');
 const path = require('path');
 const readline = require('readline');
+const { select } = require('./menu');
 const { OVERRIDES_DIR } = require('./overrides');
 
 const KIT_ROOT = path.join(__dirname, '..');
 const KIT_DIR = path.join('.ourkit', 'kit');
 const INSTALL_RECORD = path.join('.ourkit', 'install.json');
 const HOST = 'claude-code';
-const ENTRIES = ['greenfield', 'brownfield'];
+// The answers people type, and the entry each one records. The glossary's terms are accepted too.
+const ENTRY_ANSWERS = { new: 'greenfield', existing: 'brownfield', greenfield: 'greenfield', brownfield: 'brownfield' };
 // Files whose presence hints at a stack. Only presence is recorded; Init does the understanding.
 const STACK_MARKERS = [
   'package.json', 'requirements.txt', 'pyproject.toml', 'Pipfile', 'go.mod', 'Cargo.toml', 'pom.xml',
@@ -21,12 +23,12 @@ const NOT_PROJECT_CODE = ['.git', '.ourkit', '.claude'];
 // Read when needed: the copy of the kit inside a project has no package.json.
 const kitVersion = () => JSON.parse(fs.readFileSync(path.join(KIT_ROOT, 'package.json'), 'utf8')).version;
 const REPO = 'github:LanHuong142002/ourkit';
-// Before ADR 0014 the routing lived in a marked block in this file, which `upgrade` now removes.
-const LEGACY_INSTRUCTIONS_FILE = 'CLAUDE.md';
-const LEGACY_INSTRUCTIONS_START = '<!-- ourkit:start';
-const LEGACY_INSTRUCTIONS_END = '<!-- ourkit:end -->';
-const GITIGNORE_START = '# ourkit:start: managed by ourkit. `ourkit sync` rebuilds these files, so git never needs them.';
-const GITIGNORE_END = '# ourkit:end';
+// Marked blocks older versions wrote into the project's own files, which `upgrade` now removes:
+// the routing in CLAUDE.md (before ADR 0014), and the .gitignore block of 0.2.0.
+const LEGACY_BLOCKS = {
+  instructions: { file: 'CLAUDE.md', start: '<!-- ourkit:start', end: '<!-- ourkit:end -->' },
+  gitignore: { file: '.gitignore', start: '# ourkit:start', end: '# ourkit:end' },
+};
 
 const toRecordPath = (p) => p.replace(/\\/g, '/');
 // Pinned to the project's version, so every machine rebuilds the same kit.
@@ -64,8 +66,18 @@ function parseRoles(answer) {
 }
 
 function parseEntry(answer) {
-  const entry = answer.trim().toLowerCase();
-  return ENTRIES.includes(entry) ? { entry } : { error: `entry must be ${ENTRIES.join(' or ')}` };
+  const entry = ENTRY_ANSWERS[answer.trim().toLowerCase()];
+  return entry ? { entry } : { error: 'answer new or existing' };
+}
+
+// The Role menu: each Role alone, both for Full-stack, or none. Answers are typed as parseRoles reads them.
+function roleChoices() {
+  const roles = availableRoles();
+  const choices = roles.map((role) => ({ label: role[0].toUpperCase() + role.slice(1), answer: role }));
+  if (roles.includes('frontend') && roles.includes('backend')) {
+    choices.push({ label: 'Full-stack (frontend and backend)', answer: 'full-stack' });
+  }
+  return [...choices, { label: 'None', answer: 'none' }];
 }
 
 function hasProjectCode(projectDir) {
@@ -142,52 +154,25 @@ function planFiles(projectDir, roles, tracker) {
   return plan;
 }
 
-// What git should leave out: everything the kit copies, plus a Loop Run's own state.
-function ignoredPaths() {
-  const shell = readShell();
-  const hostEntries = (dir, sourceDir) => fs.readdirSync(path.join(KIT_ROOT, sourceDir), { withFileTypes: true })
-    .map((entry) => `${toRecordPath(path.join(dir, entry.name))}${entry.isDirectory() ? '/' : ''}`)
-    .sort();
-  return [
-    `${toRecordPath(KIT_DIR)}/`,
-    '.ourkit/loop.json',
-    '.ourkit/run-report.md',
-    ...hostEntries(shell.stagesDir, 'stages'),
-    ...hostEntries(shell.agentsDir, path.join('hosts', HOST, 'agents')),
-    ...hostEntries(shell.rulesDir, path.join('hosts', HOST, 'rules')),
-  ];
-}
-
-// Keeps one marked block in .gitignore. Only the block is the kit's; the rest of the file is the project's.
-function applyGitignore(projectDir) {
-  const block = [GITIGNORE_START, ...ignoredPaths(), GITIGNORE_END].join('\n');
-  const file = path.join(projectDir, '.gitignore');
-  const existing = fs.existsSync(file) ? fs.readFileSync(file, 'utf8').replace(/\r\n/g, '\n') : '';
-  const start = existing.indexOf('# ourkit:start');
-  const end = start >= 0 ? existing.indexOf(GITIGNORE_END, start) : -1;
-  let updated;
-  if (end > start) updated = existing.slice(0, start) + block + existing.slice(end + GITIGNORE_END.length);
-  else if (existing.trim()) updated = `${existing.trimEnd()}\n\n${block}\n`;
-  else updated = `${block}\n`;
-  if (updated !== existing) fs.writeFileSync(file, updated);
-}
-
-// Removes the marked block older versions kept in CLAUDE.md, and the file too if nothing else is in it.
-// Returns whether anything was removed.
-function removeLegacyInstructions(projectDir) {
-  const file = path.join(projectDir, LEGACY_INSTRUCTIONS_FILE);
+// Removes a marked block an older version wrote into one of the project's files, and the file too
+// if nothing else is in it. Returns whether anything was removed.
+function removeLegacyBlock(projectDir, { file: name, start: startMarker, end: endMarker }) {
+  const file = path.join(projectDir, name);
   if (!fs.existsSync(file)) return false;
   const existing = fs.readFileSync(file, 'utf8').replace(/\r\n/g, '\n');
-  const start = existing.indexOf(LEGACY_INSTRUCTIONS_START);
-  const end = start >= 0 ? existing.indexOf(LEGACY_INSTRUCTIONS_END, start) : -1;
+  const start = existing.indexOf(startMarker);
+  const end = start >= 0 ? existing.indexOf(endMarker, start) : -1;
   if (end < 0) return false;
   const before = existing.slice(0, start).trimEnd();
-  const after = existing.slice(end + LEGACY_INSTRUCTIONS_END.length).trim();
+  const after = existing.slice(end + endMarker.length).trim();
   const rest = [before, after].filter(Boolean).join('\n\n');
   if (rest) fs.writeFileSync(file, `${rest}\n`);
   else fs.rmSync(file);
   return true;
 }
+
+const removeLegacyInstructions = (projectDir) => removeLegacyBlock(projectDir, LEGACY_BLOCKS.instructions);
+const removeLegacyGitignore = (projectDir) => removeLegacyBlock(projectDir, LEGACY_BLOCKS.gitignore);
 
 function install(projectDir, { entry, roles }) {
   if (fs.existsSync(path.join(projectDir, INSTALL_RECORD))) {
@@ -201,7 +186,6 @@ function install(projectDir, { entry, roles }) {
   }
   const detected = STACK_MARKERS.filter((name) => fs.existsSync(path.join(projectDir, name)));
   const files = copyPlanned(projectDir, plan);
-  applyGitignore(projectDir);
   const record = { version: kitVersion(), host: HOST, entry, roles, detected, files };
   fs.writeFileSync(path.join(projectDir, INSTALL_RECORD), `${JSON.stringify(record, null, 2)}\n`);
   return { record };
@@ -229,6 +213,41 @@ async function ask(lines, prompt, parse) {
   }
 }
 
+// Typed answers, for piped input. Returns null when input ends.
+async function askTyped(suggested, need) {
+  const rl = readline.createInterface({ input: process.stdin });
+  const lines = rl[Symbol.asyncIterator]();
+  const answers = {};
+  if (need.entry) {
+    answers.entry = await ask(lines, `New project (no code yet) or existing project (has code)? [${suggested}] `, (answer) =>
+      parseEntry(answer.trim() || suggested));
+  }
+  if (answers.entry !== null && need.roles) {
+    const options = roleChoices().map(({ answer }) => answer).join(', ');
+    answers.roles = await ask(lines, `Roles? ${options}, separated by commas: `, (answer) =>
+      (answer.trim() ? parseRoles(answer) : { error: 'choose at least one option, or none' }));
+  }
+  rl.close();
+  return answers;
+}
+
+// Arrow-key menus, for a person at a terminal. Returns null for an answer the user cancelled.
+async function askWithMenus(suggested, need) {
+  const answers = {};
+  if (need.entry) {
+    const entries = [{ label: 'Existing project (has code)', answer: 'existing' }, { label: 'New project (no code yet)', answer: 'new' }];
+    const chosen = await select('Is this project new or existing?', entries.map(({ label }) => label),
+      entries.findIndex(({ answer }) => answer === suggested));
+    answers.entry = chosen === null ? null : parseEntry(entries[chosen].answer);
+  }
+  if (answers.entry !== null && need.roles) {
+    const choices = roleChoices();
+    const chosen = await select('Which Roles?', choices.map(({ label }) => label));
+    answers.roles = chosen === null ? null : parseRoles(choices[chosen].answer);
+  }
+  return answers;
+}
+
 async function main(args) {
   const { options, projectArg } = parseArgs(args);
   const projectDir = path.resolve(projectArg || process.cwd());
@@ -245,20 +264,14 @@ async function main(args) {
     }
   }
   if (!entryResult || !rolesResult) {
-    const rl = readline.createInterface({ input: process.stdin });
-    const lines = rl[Symbol.asyncIterator]();
-    const suggested = hasProjectCode(projectDir) ? 'brownfield' : 'greenfield';
-    if (!entryResult) {
-      entryResult = await ask(lines, `Greenfield (no code yet) or Brownfield (has code)? [${suggested}] `, (answer) =>
-        parseEntry(answer.trim() || suggested));
-    }
-    if (entryResult && !rolesResult) {
-      rolesResult = await ask(lines, `Roles? ${availableRoles().join(', ')}, full-stack or none, separated by commas: `, (answer) =>
-        (answer.trim() ? parseRoles(answer) : { error: 'choose at least one option, or none' }));
-    }
-    rl.close();
+    const suggested = hasProjectCode(projectDir) ? 'existing' : 'new';
+    const need = { entry: !entryResult, roles: !rolesResult };
+    const interactive = process.stdin.isTTY && process.stdout.isTTY;
+    const answers = await (interactive ? askWithMenus(suggested, need) : askTyped(suggested, need));
+    if (need.entry) entryResult = answers.entry ?? null;
+    if (need.roles) rolesResult = answers.roles ?? null;
     if (!entryResult || !rolesResult) {
-      console.error('ourkit: input ended before every question was answered; nothing was installed');
+      console.error(`ourkit: ${interactive ? 'cancelled' : 'input ended'} before every question was answered; nothing was installed`);
       return 2;
     }
   }
@@ -269,13 +282,12 @@ async function main(args) {
   }
   console.log(`ourkit: installed ${Object.keys(record.files).length} files (${record.entry}; Roles: ${record.roles.join(', ') || 'none'})`);
   if (record.detected.length > 0) console.log(`ourkit: found ${record.detected.join(', ')}`);
-  console.log('ourkit: commit .gitignore and .ourkit/install.json; the files the kit copied stay out of git');
-  console.log(`ourkit: after cloning, a teammate runs: ${syncCommand(record.version)}`);
-  console.log('ourkit: now open the agent in this project and run /ourkit-init');
+  console.log('ourkit: commit everything it added, so a teammate needs nothing after cloning');
+  console.log('ourkit: then open the agent in this project and run /ourkit-init');
   return 0;
 }
 
 module.exports = {
-  INSTALL_RECORD, KIT_ROOT, applyGitignore, copyPlanned, hashFile, ignoredPaths, install, main,
-  kitVersion, parseRoles, planFiles, removeLegacyInstructions, syncCommand, trackerPlan,
+  INSTALL_RECORD, KIT_ROOT, copyPlanned, hashFile, install, kitVersion, main, parseEntry, parseRoles, planFiles,
+  removeLegacyGitignore, removeLegacyInstructions, roleChoices, syncCommand, trackerPlan,
 };

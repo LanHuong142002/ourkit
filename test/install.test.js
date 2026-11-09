@@ -4,7 +4,7 @@ const fs = require('fs');
 const os = require('os');
 const path = require('path');
 const { spawnSync } = require('child_process');
-const { hashFile, parseRoles } = require('../src/install');
+const { hashFile, parseEntry, parseRoles, roleChoices } = require('../src/install');
 
 const KIT_ROOT = path.join(__dirname, '..');
 const BIN = path.join(KIT_ROOT, 'bin', 'ourkit.js');
@@ -107,7 +107,7 @@ test('writes nothing when a target file is in the way', () => {
 
 for (const [label, args, pattern] of [
   ['an unknown Role', ['--entry', 'brownfield', '--roles', 'database'], /unknown Role: database/],
-  ['an unknown entry', ['--entry', 'sideways', '--roles', 'none'], /entry must be/],
+  ['an unknown entry', ['--entry', 'sideways', '--roles', 'none'], /answer new or existing/],
 ]) {
   test(`rejects ${label} before writing anything`, () => {
     const result = install(args);
@@ -128,26 +128,26 @@ test('rejects a target directory that does not exist', () => {
   assert.strictEqual(install([path.join(project, 'missing'), ...FLAGS]).status, 2);
 });
 
-test('asks its questions, suggesting Brownfield when the project has code', () => {
+test('asks its questions, suggesting existing when the project has code', () => {
   const result = raw([], '\nfrontend\n');
   assert.strictEqual(result.status, 0, result.stderr);
-  assert.match(result.stdout, /\[brownfield\]/);
+  assert.match(result.stdout, /new project .* or existing project .*\? \[existing\]/i);
   assert.strictEqual(record().entry, 'brownfield');
   assert.deepStrictEqual(record().roles, ['frontend']);
 });
 
-test('suggests Greenfield for an empty project', () => {
+test('suggests new for an empty project', () => {
   const empty = path.join(project, 'empty');
   fs.mkdirSync(empty);
   const result = raw([empty], '\nnone\n');
-  assert.match(result.stdout, /\[greenfield\]/);
+  assert.match(result.stdout, /\[new\]/);
   assert.strictEqual(JSON.parse(fs.readFileSync(path.join(empty, '.ourkit', 'install.json'), 'utf8')).entry, 'greenfield');
 });
 
 test('asks again after an invalid answer', () => {
-  const result = raw([], 'sideways\nbrownfield\ndatabase\n\nbackend\n');
+  const result = raw([], 'sideways\nexisting\ndatabase\n\nbackend\n');
   assert.strictEqual(result.status, 0, result.stderr);
-  assert.match(result.stdout, /entry must be/);
+  assert.match(result.stdout, /answer new or existing/);
   assert.match(result.stdout, /unknown Role: database/);
   assert.match(result.stdout, /choose at least one/);
   assert.deepStrictEqual(record().roles, ['backend']);
@@ -160,8 +160,23 @@ test('installs nothing when input ends early', () => {
   assert.ok(!exists('.ourkit'));
 });
 
-test('points to Init', () => {
-  assert.match(install().stdout, /\/ourkit-init/);
+test('points to Init, and says to commit what it added', () => {
+  const { stdout } = install();
+  assert.match(stdout, /\/ourkit-init/);
+  assert.match(stdout, /commit everything it added/);
+  assert.ok(!exists('.gitignore'));
+});
+
+test('takes new and existing as answers, and the glossary\'s terms too', () => {
+  assert.deepStrictEqual(parseEntry(' New '), { entry: 'greenfield' });
+  assert.deepStrictEqual(parseEntry('existing'), { entry: 'brownfield' });
+  assert.deepStrictEqual(parseEntry('brownfield'), { entry: 'brownfield' });
+  assert.ok(parseEntry('existed').error);
+});
+
+test('offers each Role, Full-stack and None in the Role menu', () => {
+  assert.deepStrictEqual(roleChoices().map(({ answer }) => answer), ['backend', 'frontend', 'full-stack', 'none']);
+  for (const { answer } of roleChoices()) assert.ok(!parseRoles(answer).error, answer);
 });
 
 test('parses Role answers', () => {

@@ -206,17 +206,26 @@ test('maps kit files to Override paths', () => {
   assert.strictEqual(overridePathFor('.ourkit/kit/bin/ourkit.js'), null);
 });
 
-test('points to untracking kit files that an older version had committed', () => {
-  assert.strictEqual(spawnSync('git', ['init', '-q'], { cwd: project }).status, 0);
-  assert.strictEqual(spawnSync('git', ['add', '-f', CORE], { cwd: project }).status, 0);
+test('removes the .gitignore block of 0.2.0 and keeps the project\'s own lines', () => {
+  write('.gitignore', 'node_modules/\r\n\r\n# ourkit:start: managed by ourkit.\r\n.ourkit/kit/\r\n.claude/rules/ourkit.md\r\n# ourkit:end\r\n');
   asOldVersion(CORE, 'old content');
   const result = upgrade();
   assert.strictEqual(result.status, 0, result.stderr);
-  assert.match(result.stdout, /git rm -r --cached/);
+  assert.strictEqual(read('.gitignore'), 'node_modules/\n');
+  assert.match(result.stdout, /removed the kit's block from \.gitignore; commit the kit's files/);
 });
 
-test('says nothing about untracking when git tracks no kit file', () => {
-  assert.strictEqual(spawnSync('git', ['init', '-q'], { cwd: project }).status, 0);
+test('deletes a .gitignore that held only the kit\'s block', () => {
+  write('.gitignore', '# ourkit:start: managed by ourkit.\n.ourkit/kit/\n# ourkit:end\n');
   asOldVersion(CORE, 'old content');
-  assert.doesNotMatch(upgrade().stdout, /git rm/);
+  assert.strictEqual(upgrade().status, 0);
+  assert.ok(!fs.existsSync(abs('.gitignore')));
+});
+
+test('leaves a .gitignore with no kit block alone', () => {
+  write('.gitignore', 'dist/\n');
+  asOldVersion(CORE, 'old content');
+  const result = upgrade();
+  assert.strictEqual(read('.gitignore'), 'dist/\n');
+  assert.doesNotMatch(result.stdout, /gitignore/);
 });
