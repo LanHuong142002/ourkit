@@ -20,7 +20,7 @@ flowchart LR
 
 You need Claude Code, plus Node 18 or later for the install. Each word in **bold** below is explained the first time it shows up.
 
-**Jump to:** [Set it up](#set-it-up) · [Cheat sheet](#cheat-sheet) · [A normal change, step by step](#a-normal-change-step-by-step) · [Bugs, small fixes and huge things](#bugs-small-fixes-and-huge-things) · [Let it work without you](#let-it-work-without-you) · [Tickets and Project boards](#tickets-and-project-boards) · [Make it yours](#make-it-yours) · [Things to know](#things-to-know)
+**Jump to:** [Set it up](#set-it-up) · [Cheat sheet](#cheat-sheet) · [A normal change, step by step](#a-normal-change-step-by-step) · [Bugs, small fixes and huge things](#bugs-small-fixes-and-huge-things) · [Never get lost](#never-get-lost) · [Let it work without you](#let-it-work-without-you) · [Tickets and Project boards](#tickets-and-project-boards) · [Make it yours](#make-it-yours) · [Things to know](#things-to-know)
 
 ## Set it up
 
@@ -54,6 +54,12 @@ Don't like questions? `--entry new|existing --roles backend,frontend|full-stack|
 
 **5. Commit again.** Done. ☕
 
+**6. Optional, but you'll thank yourself:** turn on the progress line, so you always see where you are (see [Never get lost](#never-get-lost)).
+
+```
+node .ourkit/kit/bin/ourkit.js statusline on
+```
+
 ## Cheat sheet
 
 Normally you don't call these yourself. Describe what you want and ourkit runs the right ones in order. Call one by hand to start from a specific step, or to pick up where a session stopped.
@@ -73,6 +79,7 @@ You don't have to memorise this: whenever a skill stops or finishes, it ends wit
 | `/ourkit-ship` | After Review | Writes a summary and opens the PR | ✋ **you merge**, then `/ourkit-deploy` if you want |
 | `/ourkit-bugfix` | Something's broken | Proves the bug exists, fixes the real cause, proves it's gone | `/ourkit-review`, then `/ourkit-ship` |
 | `/ourkit-epic` | It's too big for one PR | Grills you, then splits it into normal-sized pieces | Each piece: `/ourkit-spec` or `/ourkit-handsoff` |
+| `/ourkit-status` | You're lost | Says what's done, what's waiting for you and what to run next, from one cheap command | Whatever its Next line says |
 | `/ourkit-huh` | You want to understand a change | Explains it from the real code, then checks it explained well | `/ourkit-ship`, or merge |
 | `/ourkit-design` | The UI looks AI-made | Finds design sources, fits the one you paste to your project | ✋ you approve, then commit `DESIGN.md` |
 | `/ourkit-handsoff` | You want it done without you | Runs every step alone and reports back | ✋ approve at its stops, then merge |
@@ -138,6 +145,29 @@ Want to understand the change before shipping? Run `/ourkit-huh`. It gives you a
 It writes a short report (five lines: what, why, how it was checked, what to watch, what's left), writes the PR description, pushes the branch and opens the PR. It also notes any lesson worth remembering for next time.
 
 **Then it's your turn: review the PR and merge it.** It never merges.
+
+## Never get lost
+
+Two ways to know where you are, so you don't have to remember:
+
+**The progress line (free).** One line at the bottom of Claude Code, updated after every message:
+
+```
+ourkit · forgot-password · Feature · 🔨 Build 3/5 · ⏳ 1 waiting on you · Next: ✋ unblock task 4, then build
+```
+
+It's worked out by a small script on your machine and never sent to Claude, so it costs **zero tokens**. Turn it on or off whenever you like:
+
+```
+node .ourkit/kit/bin/ourkit.js statusline on
+node .ourkit/kit/bin/ourkit.js statusline off
+```
+
+It's saved in `.claude/settings.local.json`, which is just yours, so teammates aren't affected. If you already have a status line of your own, ourkit won't replace it unless you add `--replace`.
+
+**`/ourkit-status` (when you want the details).** Ask it and you get a short summary: each step marked ✅ done, 🔨 now or ⬜ to do, everything waiting for you in plain words (like the actual question it needs answered), and the Next line. It runs one command instead of rereading your files, so it stays cheap.
+
+On your main branch with nothing in progress, both tell you so, and list unfinished branches you might want to get back to.
 
 ## Bugs, small fixes and huge things
 
