@@ -14,4 +14,4 @@ The Installer and `upgrade` keep one marked block in the file the Host loads in 
 
 ## Amended by ADR 0014
 
-The same text now lives in its own file, `.claude/rules/ourkit.md`, which Claude Code loads in every session like `CLAUDE.md`. The kit owns the whole file, so it no longer writes a marked block into the project's `CLAUDE.md`, and `upgrade` removes the old block. The file stays out of git and `sync` rebuilds it.
+The same text now lives in its own file, `.claude/rules/ourkit.md`, which Claude Code loads in every session like `CLAUDE.md`. The kit owns the whole file, so it no longer writes a marked block into the project's `CLAUDE.md`, and `upgrade` removes the old block. Like the rest of the kit, the file is committed.

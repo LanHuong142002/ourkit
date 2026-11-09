@@ -2,9 +2,8 @@
 const fs = require('fs');
 const path = require('path');
 const readline = require('readline');
-const { spawnSync } = require('child_process');
 const {
-  INSTALL_RECORD, applyGitignore, hashFile, ignoredPaths, planFiles, removeLegacyInstructions,
+  INSTALL_RECORD, hashFile, planFiles, removeLegacyGitignore, removeLegacyInstructions,
 } = require('./install');
 const { KIT_DIR, OVERRIDES_DIR, orphanOverrides } = require('./overrides');
 
@@ -85,18 +84,12 @@ function apply(projectDir, state, movable) {
     fs.copyFileSync(source, destination);
     files[toRecordPath(target)] = hashFile(destination);
   }
-  applyGitignore(projectDir);
   const movedInstructions = removeLegacyInstructions(projectDir);
+  const unignored = removeLegacyGitignore(projectDir);
   const { version } = JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'package.json'), 'utf8'));
   const updated = { ...record, version, files };
   fs.writeFileSync(path.join(projectDir, INSTALL_RECORD), `${JSON.stringify(updated, null, 2)}\n`);
-  return { previousVersion: record.version, version, count: plan.length, movedInstructions };
-}
-
-// Kit files committed before ADR 0014 stay tracked even once ignored, until git is told to forget them.
-function stillTracked(projectDir) {
-  const result = spawnSync('git', ['ls-files', '--', ...ignoredPaths()], { cwd: projectDir, encoding: 'utf8' });
-  return result.status === 0 && result.stdout.trim() !== '';
+  return { previousVersion: record.version, version, count: plan.length, movedInstructions, unignored };
 }
 
 async function confirm(prompt) {
@@ -147,14 +140,11 @@ async function main(args) {
       }
     }
   }
-  const { previousVersion, version, count, movedInstructions } = apply(projectDir, state, toMove);
+  const { previousVersion, version, count, movedInstructions, unignored } = apply(projectDir, state, toMove);
   for (const file of toMove) console.log(`ourkit: moved ${file} to ${toRecordPath(overridePathFor(file))}`);
   console.log(`ourkit: upgraded ${previousVersion} to ${version} (${count} files)`);
   if (movedInstructions) console.log('ourkit: moved the kit\'s block out of CLAUDE.md into .claude/rules/ourkit.md');
-  if (stillTracked(projectDir)) {
-    console.log('ourkit: the kit\'s files are now in .gitignore, but git still tracks the copies committed earlier. To stop tracking them:');
-    console.log(`  git rm -r --cached --ignore-unmatch -- ${ignoredPaths().join(' ')}`);
-  }
+  if (unignored) console.log('ourkit: removed the kit\'s block from .gitignore; commit the kit\'s files, so a teammate needs nothing after cloning');
   for (const relative of orphanOverrides(projectDir)) {
     console.log(`ourkit: warning: ${toRecordPath(path.join(OVERRIDES_DIR, relative))} no longer matches a kit file, so it has no effect`);
   }

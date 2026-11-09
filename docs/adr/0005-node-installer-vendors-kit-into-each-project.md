@@ -13,4 +13,4 @@ The kit is installed with `npx` (the Installer is written in Node) and copied di
 
 ## Amended by ADR 0014
 
-The kit is still copied into each project, but the copies are listed in `.gitignore` instead of committed. Only `.ourkit/install.json` pins the version in git, and `sync` rebuilds the copies on each machine.
+The files the kit copies stay committed. Version 0.2.0 tried keeping them out of git and rebuilding them with `sync` after each clone, and 0.3.0 went back, because every teammate had to remember an extra command. `sync` stays, to apply an Override or restore a deleted copy.

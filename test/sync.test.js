@@ -4,13 +4,13 @@ const fs = require('fs');
 const os = require('os');
 const path = require('path');
 const { spawnSync } = require('child_process');
-const { ignoredPaths } = require('../src/install');
 
 const KIT_ROOT = path.join(__dirname, '..');
 const BIN = path.join(KIT_ROOT, 'bin', 'ourkit.js');
 const STAGE = '.claude/skills/ourkit-init/SKILL.md';
 const STAGE_SOURCE = path.join(KIT_ROOT, 'stages', 'ourkit-init', 'SKILL.md');
 const STAGE_OVERRIDE = '.ourkit/overrides/stages/ourkit-init/SKILL.md';
+const COPIES = ['.ourkit/kit', '.claude/skills', '.claude/agents', '.claude/rules'];
 let project;
 
 const abs = (relative) => path.join(project, relative);
@@ -21,17 +21,14 @@ const write = (relative, content) => {
 };
 const run = (...args) => spawnSync(process.execPath, [BIN, ...args], { cwd: project, encoding: 'utf8' });
 const sync = () => run('sync');
-const git = (...args) => spawnSync('git', args, { cwd: project, encoding: 'utf8' });
-
-// What a fresh clone has: only what git keeps.
-const asFreshClone = () => {
-  for (const entry of ignoredPaths()) fs.rmSync(abs(entry), { recursive: true, force: true });
+const deleteCopies = () => {
+  for (const entry of COPIES) fs.rmSync(abs(entry), { recursive: true, force: true });
 };
 
 beforeEach(() => {
   project = fs.mkdtempSync(path.join(os.tmpdir(), 'ourkit-sync-'));
   fs.cpSync(path.join(KIT_ROOT, 'fixtures', 'node'), project, { recursive: true });
-  const result = run('--entry', 'brownfield', '--roles', 'backend');
+  const result = run('--entry', 'existing', '--roles', 'backend');
   assert.strictEqual(result.status, 0, result.stderr);
 });
 
@@ -39,32 +36,10 @@ afterEach(() => {
   fs.rmSync(project, { recursive: true, force: true });
 });
 
-test('the Installer keeps every file it copied out of git, and only those', () => {
-  const ignored = ignoredPaths();
-  assert.ok(ignored.includes('.ourkit/kit/'));
-  assert.ok(ignored.includes('.claude/rules/ourkit.md'));
-  assert.ok(ignored.includes('.claude/agents/ourkit-implementer.md'));
-  assert.ok(ignored.includes('.claude/skills/ourkit-init/'));
-  git('init', '-q');
-  const untracked = git('ls-files', '--others', '--exclude-standard').stdout.split('\n').filter(Boolean);
-  assert.ok(untracked.includes('.gitignore'));
-  assert.ok(untracked.includes('.ourkit/install.json'));
-  assert.ok(!untracked.some((file) => file.startsWith('.ourkit/kit/') || file.startsWith('.claude/')), untracked.join(', '));
-});
-
-test('keeps the project\'s own .gitignore lines and never repeats its block', () => {
-  write('.gitignore', 'node_modules/\r\n');
-  assert.strictEqual(sync().status, 0);
-  assert.strictEqual(sync().status, 0);
-  const text = read('.gitignore');
-  assert.ok(text.startsWith('node_modules/\n\n# ourkit:start'));
-  assert.strictEqual(text.split('# ourkit:end').length, 2);
-});
-
-test('rebuilds a fresh clone exactly as installed, leaving the record unchanged', () => {
+test('restores deleted copies exactly as installed, leaving the record unchanged', () => {
   const record = read('.ourkit/install.json');
   const stage = read(STAGE);
-  asFreshClone();
+  deleteCopies();
   const result = sync();
   assert.strictEqual(result.status, 0, result.stderr);
   assert.match(result.stdout, /synced \d+ files/);
@@ -73,9 +48,10 @@ test('rebuilds a fresh clone exactly as installed, leaving the record unchanged'
   assert.ok(fs.existsSync(abs('.ourkit/kit/roles/backend/checklist.md')));
   assert.ok(fs.existsSync(abs('.claude/rules/ourkit.md')));
   assert.strictEqual(read('.ourkit/install.json'), record);
+  assert.ok(!fs.existsSync(abs('.gitignore')));
 });
 
-test('picks up an Override, and a teammate\'s older copy is not taken for a hand edit', () => {
+test('applies an Override, and a teammate\'s older copy is not taken for a hand edit', () => {
   write(STAGE_OVERRIDE, 'customized');
   assert.strictEqual(sync().status, 0);
   assert.strictEqual(read(STAGE), 'customized');
@@ -101,7 +77,7 @@ test('refuses another version and names the command for the project\'s own', () 
   const record = JSON.parse(read('.ourkit/install.json'));
   record.version = '9.9.9';
   write('.ourkit/install.json', JSON.stringify(record));
-  asFreshClone();
+  deleteCopies();
   const result = sync();
   assert.strictEqual(result.status, 1);
   assert.match(result.stderr, /uses ourkit 9\.9\.9/);
@@ -114,14 +90,4 @@ test('reports a project with no install', () => {
   const result = sync();
   assert.strictEqual(result.status, 2);
   assert.match(result.stderr, /not installed/);
-});
-
-test('the Installer tells teammates how to sync', () => {
-  const other = fs.mkdtempSync(path.join(os.tmpdir(), 'ourkit-sync-'));
-  try {
-    const result = spawnSync(process.execPath, [BIN, other, '--entry', 'greenfield', '--roles', 'none'], { encoding: 'utf8' });
-    assert.match(result.stdout, /#v\d+\.\d+\.\d+ sync/);
-  } finally {
-    fs.rmSync(other, { recursive: true, force: true });
-  }
 });
