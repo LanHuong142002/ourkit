@@ -66,7 +66,7 @@ test('sets a Patch on an ordinary change and shows its Stages', () => {
 test('a Feature goes through every Stage and an Epic is split', () => {
   change('src/a.txt');
   tier('set', 'feature', '--reason', 'r');
-  assert.deepStrictEqual(shown().stages, ['Spec', 'Plan', 'Tasks', 'Build', 'Review', 'Ship']);
+  assert.deepStrictEqual(shown().stages, ['Spec', 'Plan', 'Tasks', 'Build', 'Review', 'QA', 'Ship']);
   tier('set', 'epic', '--reason', 'r');
   assert.deepStrictEqual(shown().stages, ['Grill', 'Split into Features']);
 });

@@ -114,6 +114,11 @@ for (const fixture of FIXTURES) {
     ok('review', 'resolve', '1');
     ok('gate', 'review');
 
+    blocked('gate', 'qa');
+    ok('qa', 'check', '1', 'pass', 'Seen working');
+    ok('qa', 'complete');
+    ok('gate', 'qa');
+
     blocked('gate', 'ship');
     writeDoc('report', REPORT);
     commitAll();
@@ -140,6 +145,8 @@ for (const fixture of FIXTURES) {
     writeDoc('report', REPORT);
     commitAll();
     ok('review', 'complete');
+    ok('qa', 'check', '1', 'pass', 'Seen working');
+    ok('qa', 'complete');
     blocked('gate', 'ship');
     ok('gate', 'approve-ship');
     ok('gate', 'ship');
@@ -227,7 +234,7 @@ for (const fixture of FIXTURES) {
 
 test('every Stage a route names has a skill to run it', () => {
   const stages = fs.readdirSync(path.join(KIT_ROOT, 'stages'));
-  for (const stage of ['spec', 'plan', 'tasks', 'build', 'review', 'ship', 'bugfix', 'epic', 'deploy', 'handsoff', 'huh', 'init', 'run-report']) {
+  for (const stage of ['spec', 'plan', 'tasks', 'build', 'review', 'qa', 'ship', 'bugfix', 'epic', 'deploy', 'handsoff', 'huh', 'init', 'run-report']) {
     assert.ok(stages.includes(`ourkit-${stage}`), stage);
   }
 });

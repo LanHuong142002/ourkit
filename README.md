@@ -11,7 +11,7 @@ flowchart LR
     size -->|Small| s1[Build] --> s2[Review] --> s3([✅ You commit])
 
     size -->|Normal| n1[Spec] --> n2[Plan] --> ok{{🙋 You approve the plan}}
-    ok --> n3[Tasks] --> n4[Build] --> n5[Review] --> n6[Ship] --> pr([🔀 You merge the PR])
+    ok --> n3[Tasks] --> n4[Build] --> n5[Review] --> n5b[QA] --> n6[Ship] --> pr([🔀 You merge the PR])
 
     size -->|Huge| h1[Grill you] --> h2[Split into normal pieces] --> n1
 
@@ -64,7 +64,7 @@ node .ourkit/kit/bin/ourkit.js statusline on
 
 Normally you don't call these yourself. Describe what you want and ourkit runs the right ones in order. Call one by hand to start from a specific step, or to pick up where a session stopped.
 
-A normal change runs `/ourkit-spec` → `/ourkit-plan` → `/ourkit-tasks` → `/ourkit-build` → `/ourkit-review` → `/ourkit-ship`. The rest are for bugs, big changes, design and working without you.
+A normal change runs `/ourkit-spec` → `/ourkit-plan` → `/ourkit-tasks` → `/ourkit-build` → `/ourkit-review` → `/ourkit-qa` → `/ourkit-ship`. The rest are for bugs, big changes, design and working without you.
 
 You don't have to memorise this: whenever a skill stops or finishes, it ends with a **Next:** line naming the skill to run and whether it's waiting for you.
 
@@ -75,8 +75,9 @@ You don't have to memorise this: whenever a skill stops or finishes, it ends wit
 | `/ourkit-plan` | After the spec | Looks for something that already solves it, then picks the simplest approach | `/ourkit-tasks` · ✋ **you approve the plan** |
 | `/ourkit-tasks` | After the plan | Cuts the plan into small, checkable tasks | `/ourkit-build` |
 | `/ourkit-build` | After tasks, or for a small fix | Writes the code, test first, one task at a time | `/ourkit-review` |
-| `/ourkit-review` | After Build | A fresh pair of eyes checks the work | Normal change: `/ourkit-ship`. Small fix: ✋ you commit |
-| `/ourkit-ship` | After Review | Writes a summary and opens the PR | ✋ **you merge**, then `/ourkit-deploy` if you want |
+| `/ourkit-review` | After Build | A fresh pair of eyes checks the work | Normal change: `/ourkit-qa`. Bug: `/ourkit-ship`. Small fix: ✋ you commit |
+| `/ourkit-qa` | After Review | A tester runs the app and checks each Acceptance Criterion from the spec | `/ourkit-ship` |
+| `/ourkit-ship` | After QA | Writes a summary and opens the PR | ✋ **you merge**, then `/ourkit-deploy` if you want |
 | `/ourkit-bugfix` | Something's broken | Proves the bug exists, fixes the real cause, proves it's gone | `/ourkit-review`, then `/ourkit-ship` |
 | `/ourkit-epic` | It's too big for one PR | Grills you, then splits it into normal-sized pieces | Each piece: `/ourkit-spec` or `/ourkit-handsoff` |
 | `/ourkit-status` | You're lost | Says what's done, what's waiting for you and what to run next, from one cheap command | Whatever its Next line says |
@@ -99,7 +100,7 @@ First ourkit sizes it and asks you to confirm:
 | Size | When | Steps |
 |---|---|---|
 | **Patch** (small) | A small change that touches nothing risky | Build, Review |
-| **Feature** (normal) | Anything else that fits in one PR | Spec, Plan, Tasks, Build, Review, Ship |
+| **Feature** (normal) | Anything else that fits in one PR | Spec, Plan, Tasks, Build, Review, QA, Ship |
 | **Epic** (huge) | Too big for one PR | Grill, then split into Features |
 
 **Risky** means sign-in and permissions, data, database structure, money, or a public API. Anything touching those is at least a Feature, even a one-line change, and you can't talk it down. Our example touches sign-in, so it's a Feature.
@@ -107,7 +108,7 @@ First ourkit sizes it and asks you to confirm:
 A Feature then goes through six skills, in this order. ourkit moves to the next one by itself; you step in at ✋:
 
 ```
-/ourkit-spec → /ourkit-plan → ✋ approve → /ourkit-tasks → /ourkit-build → /ourkit-review → /ourkit-ship → ✋ merge
+/ourkit-spec → /ourkit-plan → ✋ approve → /ourkit-tasks → /ourkit-build → /ourkit-review → /ourkit-qa → /ourkit-ship → ✋ merge
 ```
 
 If a session stops part way, run the next skill in the chain yourself and it picks up from there. Each step saves its work in `.ourkit/`, so a later session can pick up where this one stopped. Each step also has a **checkpoint**: it won't move on while a file is incomplete or a test fails.
@@ -140,9 +141,15 @@ A separate reviewer that never saw how the code was written gets only the spec, 
 
 Want to understand the change before shipping? Run `/ourkit-huh`. It gives you a three-sentence summary, answers questions from the real code, then asks you three quick questions. That checks how well it explained, not you, and you can skip it.
 
-### 6. Ship: "here's your PR"
+### 6. QA: "but does it actually work?"
 
-It writes a short report (five lines: what, why, how it was checked, what to watch, what's left), writes the PR description, pushes the branch and opens the PR. It also notes any lesson worth remembering for next time.
+Tests passing means the code does what the tests say. QA checks it does what **the spec** says. A tester subagent that never saw the code being written runs your app (with your `run` command, or a browser if one's available) and tries each Acceptance Criterion like a person would. Each one ends up ✅ pass, ❌ fail or 🙋 by hand.
+
+A fail is fixed, reviewed again and re-checked. A by-hand one (needs a real phone, a real inbox…) comes to you with steps and the expected result. It only ever runs the app on your machine with test data: never production, never real accounts. Small fixes and bugs skip this step: a small fix has no spec, and a bug already proves itself fixed.
+
+### 7. Ship: "here's your PR"
+
+It writes a short report (five lines: what, why, how it was checked, what to watch, what's left), writes the PR description, pushes the branch and opens the PR. The QA table goes into the report and the PR, so whoever reviews it sees what was actually tried. It also notes any lesson worth remembering for next time.
 
 **Then it's your turn: review the PR and merge it.** It never merges.
 

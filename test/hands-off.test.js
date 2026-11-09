@@ -31,15 +31,18 @@ const commitAll = () => {
   git('add', '-A');
   git('commit', '-q', '-m', 'work');
 };
-// A Hands-off Feature with its work finished, committed and reviewed.
+// A Hands-off Feature with its work finished, committed, reviewed and checked in QA.
 const finishWork = (tierArgs = []) => {
   write('work.txt', 'done');
   ourkit('tier', 'set', 'feature', '--reason', 'r', ...tierArgs);
+  write(docPath('spec'), '## Acceptance Criteria\n\n- It works\n');
   write(docPath('tasks'), TASKS);
   ourkit('task', 'done', '1');
   write(docPath('report'), REPORT);
   commitAll();
   ourkit('review', 'complete');
+  ourkit('qa', 'check', '1', 'pass', 'seen');
+  ourkit('qa', 'complete');
 };
 const passIntake = (ticket, facts = {}) => {
   const file = path.join(project, 'facts.json');
@@ -107,6 +110,7 @@ test('work changed after the approval needs approving again', () => {
   write('work.txt', 'changed');
   commitAll();
   ourkit('review', 'complete');
+  ourkit('qa', 'complete');
   const { status, json } = gate('ship');
   assert.strictEqual(status, 1);
   assert.deepStrictEqual(json.problems, ['the change moved after the user approved it, so it needs approving again']);

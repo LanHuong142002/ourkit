@@ -18,6 +18,7 @@ const SKILLS = {
   Tasks: '/ourkit-tasks',
   Build: '/ourkit-build',
   Review: '/ourkit-review',
+  QA: '/ourkit-qa',
   Ship: '/ourkit-ship',
   Reproduce: '/ourkit-bugfix',
   Fix: '/ourkit-bugfix',
@@ -79,6 +80,7 @@ function stageStates(projectDir, record, change) {
     Tasks: () => artifactDone(projectDir, 'tasks', id),
     Build: () => (record.tier === 'patch' ? change.files.length > 0 : Boolean(tasks && tasks.finished)),
     Review: () => reviewPassed(projectDir, record, change),
+    QA: () => require('./qa').qaGate(projectDir, record, change).status === 'pass',
     Ship: () => Boolean(record.pr),
     Grill: () => fs.existsSync(path.join(projectDir, relativePathFor('epic', id))),
     'Split into Features': () => artifactDone(projectDir, 'epic', id),
@@ -122,6 +124,7 @@ function nextStep({ current, waiting, record, planWritten, tasks, findings }) {
   if (current === 'Build' && tasks && tasks.blocked.length > 0) {
     return { skill: '/ourkit-build', text: `${before}unblock task ${tasks.blocked.map((t) => t.id).join(', ')}, then build`, waitsForYou: true };
   }
+  if (current === 'QA') return { skill: '/ourkit-qa', text: `${before}check it against the spec`, waitsForYou: questions > 0 };
   if (current === 'Review' && findings > 0) return { skill: '/ourkit-review', text: `fix ${findings} blocking finding${findings > 1 ? 's' : ''}`, waitsForYou: false };
   if (current === 'Ship' && record.mode === 'hands-off' && stopRequired(record) && !record.shipApproval) {
     return { skill: '/ourkit-ship', text: `${before}approve what was built, then ship`, waitsForYou: true };
