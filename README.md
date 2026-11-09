@@ -1,131 +1,242 @@
 # ourkit
 
-A package installed into an agent that guides every project through one controlled software development lifecycle. See the terms in [CONTEXT.md](CONTEXT.md) and the decisions in [docs/adr](docs/adr).
+Think of ourkit as a senior teammate you install into your project. It makes Claude Code stop, ask, plan, test and get a second opinion before anything lands, instead of happily rewriting half your codebase because you said "quick fix".
 
-v1 runs on Claude Code and needs Node 18 or later to install. See [Known limits](#known-limits) before relying on it unattended.
+It does all the work up to the pull request. **Merging and deploying to production stay with you.** It won't touch either, no matter how nicely anyone asks.
 
-## Get started
+```mermaid
+flowchart LR
+    ask([💬 You ask for something]) --> size{How big?}
 
-The repo is private, so the machine needs access to it.
+    size -->|Small| s1[Build] --> s2[Review] --> s3([✅ You commit])
 
-1. In your project's folder, run the Installer. It asks whether the project is new or existing, and which Roles you want; pick each with the arrow keys and Enter:
+    size -->|Normal| n1[Spec] --> n2[Plan] --> ok{{🙋 You approve the plan}}
+    ok --> n3[Tasks] --> n4[Build] --> n5[Review] --> n6[Ship] --> pr([🔀 You merge the PR])
 
-   ```
-   npx github:LanHuong142002/ourkit
-   ```
+    size -->|Huge| h1[Grill you] --> h2[Split into normal pieces] --> n1
 
-   To skip the questions, pass the answers: `--entry new|existing --roles backend,frontend|full-stack|none`.
+    bug([🐞 A bug]) --> b1[Reproduce] --> b2[Fix] --> b3[Verify] --> n5
+```
 
-2. Commit everything it added. A teammate who clones the project then needs nothing else.
-3. Open Claude Code in the project and run `/ourkit-init`. The agent reads the project and proposes a Stack Profile for you to confirm. An existing project also gets a glossary draft and a Baseline, so old code isn't judged.
-4. Commit again, so your team shares the setup.
+You need Claude Code, plus Node 18 or later for the install. Each word in **bold** below is explained the first time it shows up.
 
-### What the Installer adds
+**Jump to:** [Set it up](#set-it-up) · [Cheat sheet](#cheat-sheet) · [A normal change, step by step](#a-normal-change-step-by-step) · [Bugs, small fixes and huge things](#bugs-small-fixes-and-huge-things) · [Let it work without you](#let-it-work-without-you) · [Make it yours](#make-it-yours) · [Things to know](#things-to-know)
 
-| Path | What it is |
-|---|---|
-| `.ourkit/kit/` | The kit's code and docs |
-| `.claude/skills/ourkit-*/`, `.claude/agents/ourkit-*.md` | The Stages and subagents Claude Code runs |
-| `.claude/rules/ourkit.md` | Loaded in every session, so a plain request goes through the lifecycle |
-| `.ourkit/install.json` | The kit's version, Roles and a hash of each file, for `upgrade` |
+## Set it up
 
-Your `CLAUDE.md` is yours. The kit doesn't write to it. Don't edit the kit's files either; add an [Override](core/overrides.md) instead, then run `npx github:LanHuong142002/ourkit sync` to apply it.
+The repo is private, so your machine needs access to it.
 
-## Everyday use
+**1. Install.** In your project's folder:
 
-Describe your change to the agent. It proposes a Tier, and you confirm it:
+```
+npx github:LanHuong142002/ourkit
+```
 
-| Tier | For | Goes through |
+It asks two things; pick with the arrow keys and Enter:
+
+- **New or existing project?** If there's code already, pick existing. ourkit then leaves your old code alone and only judges what you change from now on.
+- **Which Roles?** A **Role** is extra know-how plus a review checklist for one kind of work: `backend`, `frontend`, both, or none.
+
+Don't like questions? `--entry new|existing --roles backend,frontend|full-stack|none`.
+
+**2. Commit** everything it added. Teammates who clone the project get the same setup for free.
+
+**3. Run `/ourkit-init`** in Claude Code. Pick Opus with `/model` first; it's the one ourkit expects.
+
+- **Existing project:** it reads your build files, scripts and CI, finds the commands your team really runs (`test`, `lint`, `build` and so on), and asks you to confirm. It never makes one up. It also writes a small glossary of your domain words, and marks today's commit as the starting line, so old code isn't graded.
+- **New project:** it asks what you're building, suggests two or three tech stacks with their trade-offs, and sets up the one you pick with that stack's official tool.
+
+**4. Optional extras:**
+
+- Tickets live in GitHub Issues? `npx github:LanHuong142002/ourkit tracker add github`
+- Want your own look instead of the usual AI one? `/ourkit-design`
+- House rules for your project? Write them in `.ourkit/rules.md`
+
+**5. Commit again.** Done. ☕
+
+## Cheat sheet
+
+Normally you don't call these yourself. Describe what you want and ourkit runs the right ones in order. Call one by hand to start from a specific step, or to pick up where a session stopped.
+
+| Skill | Use it when | What it does | Then |
+|---|---|---|---|
+| `/ourkit-init` | Right after installing | Learns your project's commands and sets the starting line | Commit, then ask for your first change |
+| `/ourkit-spec` | Starting a normal change | Asks questions until the request is clear | `/ourkit-plan` · ✋ you agree to the spec |
+| `/ourkit-plan` | After the spec | Looks for something that already solves it, then picks the simplest approach | `/ourkit-tasks` · ✋ **you approve the plan** |
+| `/ourkit-tasks` | After the plan | Cuts the plan into small, checkable tasks | `/ourkit-build` |
+| `/ourkit-build` | After tasks, or for a small fix | Writes the code, test first, one task at a time | `/ourkit-review` |
+| `/ourkit-review` | After Build | A fresh pair of eyes checks the work | Normal change: `/ourkit-ship`. Small fix: ✋ you commit |
+| `/ourkit-ship` | After Review | Writes a summary and opens the PR | ✋ **you merge**, then `/ourkit-deploy` if you want |
+| `/ourkit-bugfix` | Something's broken | Proves the bug exists, fixes the real cause, proves it's gone | `/ourkit-review`, then `/ourkit-ship` |
+| `/ourkit-epic` | It's too big for one PR | Grills you, then splits it into normal-sized pieces | Each piece: `/ourkit-spec` or `/ourkit-handsoff` |
+| `/ourkit-huh` | You want to understand a change | Explains it from the real code, then checks it explained well | `/ourkit-ship`, or merge |
+| `/ourkit-design` | The UI looks AI-made | Finds design sources, fits the one you paste to your project | ✋ you approve, then commit `DESIGN.md` |
+| `/ourkit-handsoff` | You want it done without you | Runs every step alone and reports back | ✋ approve at its stops, then merge |
+| `/ourkit-run-report` | After a batch run of tickets | Tells you what happened and what's waiting | Answer its questions, merge the PRs |
+| `/ourkit-deploy` | Trying it on staging | Deploys to staging, refuses production | Check staging. Production is yours |
+
+✋ means it stops and waits for you.
+
+## A normal change, step by step
+
+Say you type:
+
+> Add a "forgot password" link to the sign-in page.
+
+First ourkit sizes it and asks you to confirm:
+
+| Size | When | Steps |
 |---|---|---|
-| Patch | A small change, outside any Sensitive Area | Build, Review |
-| Feature | Anything else that fits one cycle | Spec, Plan, Tasks, Build, Review, Ship |
-| Epic | Too large for one cycle | Grilled, then split into Features |
+| **Patch** (small) | A small change that touches nothing risky | Build, Review |
+| **Feature** (normal) | Anything else that fits in one PR | Spec, Plan, Tasks, Build, Review, Ship |
+| **Epic** (huge) | Too big for one PR | Grill, then split into Features |
 
-A change touching auth, data, schema, money or a public API is always at least a Feature.
+**Risky** means sign-in and permissions, data, database structure, money, or a public API. Anything touching those is at least a Feature, even a one-line change, and you can't talk it down. Our example touches sign-in, so it's a Feature.
 
-You can start any step yourself:
+Each step saves its work in `.ourkit/`, so a later session can pick up where this one stopped. Each step also has a **checkpoint**: it won't move on while a file is incomplete or a test fails.
 
-| Command | What it does |
-|---|---|
-| `/ourkit-spec`, `/ourkit-plan`, `/ourkit-tasks`, `/ourkit-build`, `/ourkit-review`, `/ourkit-ship` | Run one Stage |
-| `/ourkit-bugfix` | Fix a bug: reproduce it, fix it, verify the fix |
-| `/ourkit-epic` | Question a large change and split it |
-| `/ourkit-huh` | Understand a change, then check your understanding |
-| `/ourkit-design` | Pick a visual direction, paste it in, and get a `DESIGN.md` that fits the project |
-| `/ourkit-handsoff` | Take one change to a PR without you |
-| `/ourkit-deploy` | Deploy to staging; it never deploys to production |
+### 1. Spec: "what exactly do you want?"
 
-## Working unattended
+It reads the related code, then asks only the questions that would change the result: behaviour, users, edge cases, what's out of scope. Every question comes with its own suggested answer, so you can just say "yes".
 
-By default you work alongside the agent (Pair). `/ourkit-handsoff` works by itself and reports back. A change touching a Sensitive Area, or needing you to act on a service, stops after Plan and before Ship. Merging and deploying to production are always yours.
+Result: `.ourkit/specs/<change>.md`, with numbered requirements that can each be tested. **You agree to it before it moves on.**
 
-To work through many tickets, run this in a terminal from the default branch, with a clean tree. Without a Budget, it won't start:
+### 2. Plan: "how will we build it?"
+
+Before inventing anything, it checks whether your project or its libraries already solve this, and reuses what it finds. Then it picks the simplest approach and says how each requirement will be tested.
+
+Result: `.ourkit/plans/<change>.md`. **Nothing gets built until you approve the plan.** If the plan changes afterwards, it asks you again.
+
+### 3. Tasks: "cut it into bites"
+
+It splits the plan into small tasks, each with what it depends on and how to check it worked. You don't need to do anything here.
+
+### 4. Build: "write it, test first"
+
+It makes a branch, then hands each task to a helper that writes a failing test first and then the code that makes it pass. The main session reads every diff, checks it, and commits it. At the end it runs your tests, lint and build.
+
+If something can't be checked automatically, such as how a page looks on a phone, it goes on a **to-test list** for you, with steps. If your project has no test command, it says "not run" rather than pretending it passed.
+
+### 5. Review: "a fresh pair of eyes"
+
+A separate reviewer that never saw how the code was written gets only the spec, the diff and your Role checklists. Changes to risky areas get a second reviewer that looks only at those. Problems are marked **blocking** (must fix) or **non-blocking** (nice to have). Blocking ones are fixed, then the change is reviewed again.
+
+Want to understand the change before shipping? Run `/ourkit-huh`. It gives you a three-sentence summary, answers questions from the real code, then asks you three quick questions. That checks how well it explained, not you, and you can skip it.
+
+### 6. Ship: "here's your PR"
+
+It writes a short report (five lines: what, why, how it was checked, what to watch, what's left), writes the PR description, pushes the branch and opens the PR. It also notes any lesson worth remembering for next time.
+
+**Then it's your turn: review the PR and merge it.** It never merges.
+
+## Bugs, small fixes and huge things
+
+### 🐞 A bug: `/ourkit-bugfix`
+
+1. **Reproduce.** It shows the bug happening, ideally with a failing test written by a helper that doesn't know the fix yet. **If it can't reproduce the bug, it doesn't touch any code.** It asks you for more detail instead, because a fix you never saw fail proves nothing.
+2. **Size it.** Same rules as everything else: a one-line fix in sign-in is still a Feature.
+3. **Fix.** It finds the real cause and fixes only that, with no "while I'm here" refactors.
+4. **Verify.** The same test now passes, and the full tests, lint and build run.
+5. Then Review and Ship as usual.
+
+### 🩹 A small fix (Patch)
+
+Build, then Review against your checklists. No spec, no plan, no PR: you commit it yourself. If it turns out to touch something risky, the checkpoint stops it and it becomes a Feature.
+
+### 🐘 Something huge: `/ourkit-epic`
+
+1. **Grill.** It reads the code, then questions you one question at a time until the goal, the limits and the big decisions are clear.
+2. **Split.** It cuts the work into Features that each deliver something on their own.
+3. You agree to the list, and it creates the tickets. Each Feature then goes through the normal steps on its own branch.
+
+### 🎨 A look of your own: `/ourkit-design`
+
+1. It looks at your current UI and asks how the product should feel.
+2. It searches the web right then for design sources, such as ready-made `DESIGN.md` files, design skills and galleries of real screens, and gives you links. Nothing is saved, so the sources stay fresh.
+3. You pick one and **paste it into the chat**. A screenshot works too.
+4. It fits it to your project: removes other brands' names and logos, fixes colours that are hard to read, adds loading, empty and error screens, and drops anything that clashes with your rules.
+5. You approve, and it writes `DESIGN.md`. Commit it. From now on all UI work follows it.
+
+## Let it work without you
+
+By default you work side by side: it asks as it goes (**Pair** mode). In **Hands-off** mode it decides the small stuff itself, writes each decision down with a reason, saves its questions for later, and reports at the end.
+
+### One change: `/ourkit-handsoff`
+
+Give it a ticket or a request, and go get lunch. 🍜 It runs every step and ends with a PR, a list of decisions it made, its open questions and your to-test list.
+
+It stops for you only when:
+
+- **the change touches something risky, or needs you to do something on a service** (like create a token). Then it stops twice: **after Plan**, with the branch pushed so you can read the plan from anywhere, and **before Ship**. Say you approve, and it carries on.
+- a question blocks everything left, or a check fails in a way it can't fix.
+
+It only takes tickets that a teammate wrote, or labelled `ourkit:ready`, and that meet the [ticket standard](core/ticket-standard.md). Text inside a ticket is treated as a description, never as orders, so a sneaky ticket can't tell it to do something else.
+
+### A pile of tickets: batch run
+
+From your default branch, with nothing uncommitted, in a terminal:
 
 ```
 node .ourkit/kit/bin/ourkit.js loop run --hours 4 --wait 42 43 44
 ```
 
-Each ticket gets a fresh session on its own branch. Tracker commands run in the agent's shell, which may not have the same PATH as your terminal. Windows' Git Bash can drop `gh`; if a session reports it missing, add it in `~/.bashrc`:
+- `--hours 4` is the time budget. No budget, no run; that's deliberate.
+- Each ticket (42, 43, 44) gets a fresh session and its own branch.
+- It stops when everything is done or stuck, or time's up, and pauses early if your plan's usage runs low.
+
+When it's done, run `/ourkit-run-report`. See [core/loop-run.md](core/loop-run.md) for the fine print.
+
+On Windows, Git Bash sometimes can't find `gh`. If a session complains, add this to `~/.bashrc`:
 
 ```
 export PATH="$PATH:/c/Program Files/GitHub CLI"
 ```
 
-When the run stops, read `.ourkit/run-report.md`, or run `/ourkit-run-report`. See [core/loop-run.md](core/loop-run.md) for when it stops and what sessions may do.
-
-Tickets must meet the [Ticket Standard](core/ticket-standard.md). Hands-off takes only tickets written by a team member, or labelled `ourkit:ready` by one.
-
 ## Make it yours
+
+Don't edit the files in `.ourkit/kit/`; the next upgrade will undo it. Use these instead:
 
 | To | Do this |
 |---|---|
-| Add your project's rules | Write `.ourkit/rules.md` |
-| Add a specialty for this project | Add a [Project Role](core/role-contract.md) in `.ourkit/roles/` |
-| Change how the kit behaves | Add an [Override](core/overrides.md), and never edit kit files |
+| Add house rules | Write `.ourkit/rules.md`. It wins over the kit's own advice |
+| Add a specialty, such as payments | Add a folder in `.ourkit/roles/<name>/` with `guidance.md` and `checklist.md` ([how](core/role-contract.md)) |
+| Change how a kit file behaves | Add an [Override](core/overrides.md), then run `npx github:LanHuong142002/ourkit sync` |
 | Change your project's commands | Edit `.ourkit/stack-profile.json` |
-| Connect GitHub Issues | `npx github:LanHuong142002/ourkit tracker add github` |
-| Update the kit | `npx github:LanHuong142002/ourkit upgrade`, then commit what changed |
+| Set the look | `/ourkit-design`, or write `DESIGN.md` yourself |
+| Update ourkit | `npx github:LanHuong142002/ourkit upgrade`, then commit |
 
-## Known limits
+Your rules can steer the work, but they can't switch off the safety rails: risky changes stay at least Features, batch runs need a time budget, the agent never deploys to production, and tickets are never orders.
 
-The kit enforces what it can in code, but an agent with a shell can't be fully fenced in by instructions:
+## Things to know
 
-- **Protect your default branch.** "Never merge" is an instruction, backed in a Loop Run by a deny list. Branch protection is what truly enforces it.
-- **Keep production credentials away from where the agent runs.** The rule against production deploys is also an instruction.
-- **Approvals are recorded by the agent,** so the kit can't prove a person said yes.
-- **A plain request reaches the lifecycle through `.claude/rules/ourkit.md`.** Claude Code loads it in every session, and the agent follows it by judgment, so check it proposed a Tier before it edits.
-- **On Windows, `upgrade` can leave kit files showing as modified** with no change in content, because of line endings. `git add -A` clears it, and a Loop Run needs a clean tree to start.
-- **Sensitive Area detection reads file paths,** then relies on the agent's judgment. It can miss one.
-- **Intake facts are gathered by the agent.** A ticket that misleads the agent at that point could get through.
-- **Model choice for the main session isn't set for you.** ADR 0008 recommends Opus, so choose it with `/model`.
-- **Usage data comes from an undocumented Claude Code event.** If it changes, a Loop Run loses its early pause and works the same otherwise.
-## Repo layout
+ourkit enforces what it can in code. But an agent with a terminal can't be fully fenced in by instructions, so:
 
-| Folder | Contents |
+- **Turn on branch protection.** "Never merge" is an instruction. Branch protection is what actually stops it.
+- **Keep production credentials away from the agent.** "Never deploy to production" is an instruction too.
+- **Approvals are recorded by the agent,** so ourkit can't prove a human said yes.
+- **Check that it sized your request before it edits.** A plain request reaches ourkit through `.claude/rules/ourkit.md`, which Claude follows by judgment. If it skips ahead, run `/ourkit-spec` yourself.
+- **Risky-area detection starts from file paths,** then relies on judgment. It can miss one.
+- **On Windows, `upgrade` can show kit files as changed** when only line endings differ. `git add -A` fixes it, and a batch run needs a clean tree.
+- **Pick Opus yourself** with `/model`; ourkit doesn't set the main model for you.
+- **The early pause in batch runs** relies on an undocumented Claude Code event. If that changes, runs still work, just without the early pause.
+
+The words ourkit uses are defined in [CONTEXT.md](CONTEXT.md), and the reasons behind its rules are in [docs/adr](docs/adr).
+
+## Working on ourkit itself
+
+| Folder | What's inside |
 |---|---|
-| `bin/` | The `ourkit` command |
-| `src/` | Code behind the command |
-| `core/` | Core |
-| `roles/` | Roles |
-| `stack-packs/` | Stack Packs |
-| `tracker-packs/` | Tracker Packs |
-| `stages/` | Stages, each a standard Agent Skills folder |
-| `hosts/<host>/` | The Host Shell for each Host |
-| `fixtures/` | Fixture Projects |
-| `test/` | The kit's tests |
-
-A folder appears only once it has content; `stack-packs/` doesn't exist yet.
-
-## Development
+| `stages/` | The skills, one folder each |
+| `core/` | Rules every project gets |
+| `roles/` | The Roles (`backend`, `frontend`) |
+| `hosts/claude-code/` | The Claude Code helpers and settings |
+| `tracker-packs/` | Ticket connections (GitHub Issues) |
+| `bin/`, `src/` | The `ourkit` command and its code |
+| `fixtures/`, `test/` | Sample projects and tests |
 
 ```
-npm test
-```
-
-Run the Contract Check on the kit:
-
-```
-node bin/ourkit.js check
+npm test                   # run the tests
+node bin/ourkit.js check   # check every skill, Role and pack follows its contract
 ```
 
 ## Credits
