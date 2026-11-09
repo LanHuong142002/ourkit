@@ -51,6 +51,7 @@ You can start any step yourself:
 | `/ourkit-bugfix` | Fix a bug: reproduce it, fix it, verify the fix |
 | `/ourkit-epic` | Question a large change and split it |
 | `/ourkit-huh` | Understand a change, then check your understanding |
+| `/ourkit-design` | Pick a visual direction, paste it in, and get a `DESIGN.md` that fits the project |
 | `/ourkit-handsoff` | Take one change to a PR without you |
 | `/ourkit-deploy` | Deploy to staging; it never deploys to production |
 
@@ -126,3 +127,7 @@ Run the Contract Check on the kit:
 ```
 node bin/ourkit.js check
 ```
+
+## Credits
+
+The testing and security rules in `core/`, and parts of the Role guidance, adapt ideas from [addyosmani/agent-skills](https://github.com/addyosmani/agent-skills) (MIT License, Copyright (c) 2025 Addy Osmani), rewritten to stay stack neutral.
