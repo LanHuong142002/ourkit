@@ -202,5 +202,21 @@ test('maps kit files to Override paths', () => {
   const normalize = (p) => p && p.replace(/\\/g, '/');
   assert.strictEqual(normalize(overridePathFor(CORE)), CORE_OVERRIDE);
   assert.strictEqual(normalize(overridePathFor(STAGE)), STAGE_OVERRIDE);
+  assert.strictEqual(normalize(overridePathFor('.claude/rules/ourkit.md')), '.ourkit/overrides/rules/ourkit.md');
   assert.strictEqual(overridePathFor('.ourkit/kit/bin/ourkit.js'), null);
+});
+
+test('points to untracking kit files that an older version had committed', () => {
+  assert.strictEqual(spawnSync('git', ['init', '-q'], { cwd: project }).status, 0);
+  assert.strictEqual(spawnSync('git', ['add', '-f', CORE], { cwd: project }).status, 0);
+  asOldVersion(CORE, 'old content');
+  const result = upgrade();
+  assert.strictEqual(result.status, 0, result.stderr);
+  assert.match(result.stdout, /git rm -r --cached/);
+});
+
+test('says nothing about untracking when git tracks no kit file', () => {
+  assert.strictEqual(spawnSync('git', ['init', '-q'], { cwd: project }).status, 0);
+  asOldVersion(CORE, 'old content');
+  assert.doesNotMatch(upgrade().stdout, /git rm/);
 });

@@ -10,3 +10,7 @@ The kit is installed with `npx` (the Installer is written in Node) and copied di
 ## Consequences
 
 - An `upgrade` command is needed to update the kit in each project.
+
+## Amended by ADR 0014
+
+The kit is still copied into each project, but the copies are listed in `.gitignore` instead of committed. Only `.ourkit/install.json` pins the version in git, and `sync` rebuilds the copies on each machine.
