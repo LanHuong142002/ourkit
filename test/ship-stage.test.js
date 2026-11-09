@@ -9,6 +9,7 @@ const KIT_ROOT = path.join(__dirname, '..');
 const BIN = path.join(KIT_ROOT, 'bin', 'ourkit.js');
 const TASKS = '## Tasks\n\n### 1. One\n\nDo it.\n\nDepends on: none\nVerify: x\n\n### 2. Two\n\nDo it.\n\nDepends on: none\nVerify: x\n';
 const REPORT = '## Summary\n\none\ntwo\nthree\nfour\nfive\n\n## Details\n\nMore.\n';
+const SPEC = '## Goal\n\ng\n\n## Requirements\n\n1. r\n\n## Acceptance Criteria\n\n- It works\n\n## Out of Scope\n\nnone\n\n## Open Questions\n\nnone\n';
 let project;
 
 const git = (...args) => {
@@ -28,16 +29,19 @@ const shipGate = () => {
   const result = ourkit('gate', 'ship');
   return { status: result.status, problems: JSON.parse(result.stdout).problems || [] };
 };
-// A Feature with its work done, committed and reviewed.
+// A Feature with its work done, committed, reviewed and checked in QA.
 const readyFeature = () => {
   write('work.txt', 'done');
   ourkit('tier', 'set', 'feature', '--reason', 'r');
+  write(ourkit('gate', 'path', 'spec').stdout.trim(), SPEC);
   write(ourkit('gate', 'path', 'tasks').stdout.trim(), TASKS);
   ourkit('task', 'done', '1');
   ourkit('task', 'done', '2');
   write(ourkit('gate', 'path', 'report').stdout.trim(), REPORT);
   commitAll();
   ourkit('review', 'complete');
+  ourkit('qa', 'check', '1', 'pass', 'seen');
+  ourkit('qa', 'complete');
 };
 
 beforeEach(() => {
