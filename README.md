@@ -14,9 +14,30 @@ The repo is private, so the machine needs access to it.
    npx github:LanHuong142002/ourkit
    ```
 
-2. Commit what it added.
+2. Commit `.gitignore` and `.ourkit/install.json`. The files the kit copies (`.ourkit/kit/` and its `ourkit-*` skills, subagents and rules under `.claude/`) are listed in `.gitignore`, so they stay out of git.
 3. Open Claude Code in the project and run `/ourkit-init`. The agent reads the project and proposes a Stack Profile for you to confirm. An existing project also gets a glossary draft and a Baseline, so old code isn't judged.
-4. Commit again, so your team shares the setup.
+4. Commit what's now in `.ourkit/`, so your team shares the setup.
+
+### After cloning
+
+A teammate rebuilds the kit's files once, at the version the project records. The Installer prints the exact command, for example:
+
+```
+npx github:LanHuong142002/ourkit#v0.2.0 sync
+```
+
+Run it again whenever someone upgrades the kit or adds an Override. If the version doesn't match, `sync` names the right command.
+
+### What git keeps
+
+| Kept in git | Left out (`sync` rebuilds it) |
+|---|---|
+| `.ourkit/install.json`: version and Roles | `.ourkit/kit/`: the kit's code and docs |
+| `.ourkit/stack-profile.json`, `baseline.json`, `glossary.md` | `.claude/skills/ourkit-*/`, `.claude/agents/ourkit-*.md` |
+| `.ourkit/rules.md`, `roles/`, `overrides/`, `lessons.md` | `.claude/rules/ourkit.md`: routes requests into the lifecycle |
+| `.ourkit/changes/`, `specs/`, `plans/`, `tasks/`, `bugs/`, `epics/`, `reports/` | `.ourkit/loop.json`, `.ourkit/run-report.md`: a Loop Run's own state |
+
+Your `CLAUDE.md` is yours. The kit doesn't write to it.
 
 ## Everyday use
 
@@ -70,7 +91,7 @@ Tickets must meet the [Ticket Standard](core/ticket-standard.md). Hands-off take
 | Change how the kit behaves | Add an [Override](core/overrides.md), and never edit kit files |
 | Change your project's commands | Edit `.ourkit/stack-profile.json` |
 | Connect GitHub Issues | `npx github:LanHuong142002/ourkit tracker add github` |
-| Update the kit | `npx github:LanHuong142002/ourkit upgrade` |
+| Update the kit | `npx github:LanHuong142002/ourkit upgrade`, then commit `.ourkit/install.json` and `.gitignore`; teammates run `sync` |
 
 ## Known limits
 
@@ -79,13 +100,12 @@ The kit enforces what it can in code, but an agent with a shell can't be fully f
 - **Protect your default branch.** "Never merge" is an instruction, backed in a Loop Run by a deny list. Branch protection is what truly enforces it.
 - **Keep production credentials away from where the agent runs.** The rule against production deploys is also an instruction.
 - **Approvals are recorded by the agent,** so the kit can't prove a person said yes.
-- **A plain request reaches the lifecycle through `CLAUDE.md`.** The Installer adds a marked block there, and the agent follows it by judgment, so check it proposed a Tier before it edits.
+- **A plain request reaches the lifecycle through `.claude/rules/ourkit.md`.** Claude Code loads it in every session, and the agent follows it by judgment, so check it proposed a Tier before it edits.
+- **Nothing works until `sync` has run on that machine.** Without it, Claude Code has no `ourkit-*` skills or rules, and plain requests skip the lifecycle.
 - **Sensitive Area detection reads file paths,** then relies on the agent's judgment. It can miss one.
 - **Intake facts are gathered by the agent.** A ticket that misleads the agent at that point could get through.
 - **Model choice for the main session isn't set for you.** ADR 0008 recommends Opus, so choose it with `/model`.
 - **Usage data comes from an undocumented Claude Code event.** If it changes, a Loop Run loses its early pause and works the same otherwise.
-- **On Windows, `upgrade` can leave kit files showing as modified** with no change in content, because of line endings. `git add -A` clears it, and a Loop Run needs a clean tree to start.
-
 ## Repo layout
 
 | Folder | Contents |

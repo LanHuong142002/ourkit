@@ -2,22 +2,28 @@
 const fs = require('fs');
 const path = require('path');
 const readline = require('readline');
-const { INSTALL_RECORD, applyInstructions, hashFile, planFiles } = require('./install');
+const { spawnSync } = require('child_process');
+const {
+  INSTALL_RECORD, applyGitignore, hashFile, ignoredPaths, planFiles, removeLegacyInstructions,
+} = require('./install');
 const { KIT_DIR, OVERRIDES_DIR, orphanOverrides } = require('./overrides');
 
-const STAGES_DIR = path.join('.claude', 'skills');
-const AGENTS_DIR = path.join('.claude', 'agents');
+// Kit files that live in the Host's own folders, and the Override folder for each.
+const HOST_FOLDERS = [
+  [path.join('.claude', 'skills'), 'stages'],
+  [path.join('.claude', 'agents'), 'agents'],
+  [path.join('.claude', 'rules'), 'rules'],
+];
 const toRecordPath = (p) => p.replace(/\\/g, '/');
 
 // Where a hand edit to this kit file should move. Returns null when an Override can't
 // apply, because the command's own code isn't resolved through Overrides.
 function overridePathFor(target) {
   const normalized = path.normalize(target);
-  if (normalized.startsWith(STAGES_DIR + path.sep)) {
-    return path.join(OVERRIDES_DIR, 'stages', path.relative(STAGES_DIR, normalized));
-  }
-  if (normalized.startsWith(AGENTS_DIR + path.sep)) {
-    return path.join(OVERRIDES_DIR, 'agents', path.relative(AGENTS_DIR, normalized));
+  for (const [dir, overrideFolder] of HOST_FOLDERS) {
+    if (normalized.startsWith(dir + path.sep)) {
+      return path.join(OVERRIDES_DIR, overrideFolder, path.relative(dir, normalized));
+    }
   }
   const relative = path.relative(KIT_DIR, normalized);
   if (relative.startsWith(`bin${path.sep}`) || relative.startsWith(`src${path.sep}`)) return null;
@@ -79,11 +85,18 @@ function apply(projectDir, state, movable) {
     fs.copyFileSync(source, destination);
     files[toRecordPath(target)] = hashFile(destination);
   }
-  applyInstructions(projectDir);
+  applyGitignore(projectDir);
+  const movedInstructions = removeLegacyInstructions(projectDir);
   const { version } = JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'package.json'), 'utf8'));
   const updated = { ...record, version, files };
   fs.writeFileSync(path.join(projectDir, INSTALL_RECORD), `${JSON.stringify(updated, null, 2)}\n`);
-  return { previousVersion: record.version, version, count: plan.length };
+  return { previousVersion: record.version, version, count: plan.length, movedInstructions };
+}
+
+// Kit files committed before ADR 0014 stay tracked even once ignored, until git is told to forget them.
+function stillTracked(projectDir) {
+  const result = spawnSync('git', ['ls-files', '--', ...ignoredPaths()], { cwd: projectDir, encoding: 'utf8' });
+  return result.status === 0 && result.stdout.trim() !== '';
 }
 
 async function confirm(prompt) {
@@ -134,9 +147,14 @@ async function main(args) {
       }
     }
   }
-  const { previousVersion, version, count } = apply(projectDir, state, toMove);
+  const { previousVersion, version, count, movedInstructions } = apply(projectDir, state, toMove);
   for (const file of toMove) console.log(`ourkit: moved ${file} to ${toRecordPath(overridePathFor(file))}`);
   console.log(`ourkit: upgraded ${previousVersion} to ${version} (${count} files)`);
+  if (movedInstructions) console.log('ourkit: moved the kit\'s block out of CLAUDE.md into .claude/rules/ourkit.md');
+  if (stillTracked(projectDir)) {
+    console.log('ourkit: the kit\'s files are now in .gitignore, but git still tracks the copies committed earlier. To stop tracking them:');
+    console.log(`  git rm -r --cached --ignore-unmatch -- ${ignoredPaths().join(' ')}`);
+  }
   for (const relative of orphanOverrides(projectDir)) {
     console.log(`ourkit: warning: ${toRecordPath(path.join(OVERRIDES_DIR, relative))} no longer matches a kit file, so it has no effect`);
   }

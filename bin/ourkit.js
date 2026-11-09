@@ -21,6 +21,7 @@ const subcommands = {
   mode: () => require('../src/mode').modeMain(args),
   question: () => require('../src/mode').questionMain(args),
   task: () => require('../src/tasks').main(args),
+  sync: () => require('../src/sync').main(args),
   teachback: () => require('../src/teachback').main(args),
   tier: () => require('../src/tier').main(args),
   ticket: () => require('../src/ticket-standard').main(args),

@@ -21,12 +21,14 @@ function filesUnder(dir) {
 }
 
 // An Override with no kit file behind it silently does nothing, for example after
-// an upgrade renames the file. Stages and subagents live outside the kit folder, so they're skipped.
+// an upgrade renames the file. Stages, subagents and rules live outside the kit folder, so they're skipped.
+const HOST_FOLDERS = ['stages', 'agents', 'rules'];
+
 function orphanOverrides(projectDir) {
   const root = path.join(projectDir, OVERRIDES_DIR);
   return filesUnder(root)
     .map((file) => path.relative(root, file))
-    .filter((relative) => !relative.startsWith(`stages${path.sep}`) && !relative.startsWith(`agents${path.sep}`))
+    .filter((relative) => !HOST_FOLDERS.some((folder) => relative.startsWith(`${folder}${path.sep}`)))
     .filter((relative) => !fs.existsSync(path.join(projectDir, KIT_DIR, relative)));
 }
 

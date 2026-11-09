@@ -136,7 +136,7 @@ _Avoid_: research, references
 ### Installation
 
 **Installer**:
-The command-line tool run in the terminal before opening the agent: it asks Greenfield or Brownfield, selects Roles, copies the kit into the project and does preliminary stack detection. It does no inference.
+The command-line tool run in the terminal before opening the agent: it asks Greenfield or Brownfield, selects Roles, copies the kit into the project (keeping the copies out of git) and does preliminary stack detection. It does no inference. On another machine, `sync` rebuilds the copies at the version the project records.
 _Avoid_: CLI (when speaking generally), setup script
 
 **Init**:
