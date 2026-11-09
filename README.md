@@ -60,6 +60,8 @@ Normally you don't call these yourself. Describe what you want and ourkit runs t
 
 A normal change runs `/ourkit-spec` → `/ourkit-plan` → `/ourkit-tasks` → `/ourkit-build` → `/ourkit-review` → `/ourkit-ship`. The rest are for bugs, big changes, design and working without you.
 
+You don't have to memorise this: whenever a skill stops or finishes, it ends with a **Next:** line naming the skill to run and whether it's waiting for you.
+
 | Skill | Use it when | What it does | Then |
 |---|---|---|---|
 | `/ourkit-init` | Right after installing | Learns your project's commands and sets the starting line | Commit, then ask for your first change |
