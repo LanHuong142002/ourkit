@@ -30,7 +30,7 @@ Deliver the reviewed change as a clear PR, so the user can decide whether to mer
    - **Links & References:** the ticket this closes, if any, and relevant decisions.
    - In Hands-off, also include the Decision Log (`ourkit decision list`), the open Question Batch (`ourkit question list --open`), non-blocking findings, and the Test Handoff with its step-by-step instructions, since the user wasn't there.
 5. **Assess it** with `ourkit ticket <file> --title "<title>" --pr`, then judge the rest of 4C yourself. Fix what's wrong.
-6. **Push the branch and open the PR** using the project's git host tools. If you can't, because a tool is missing or you aren't signed in, give the user the title and description to use, and add the step with `ourkit pending add`.
+6. **Push the branch and open the PR** using the project's git host tools, then run `ourkit status pr <link>` so the status shows it waiting for the user's merge. If you can't open it, because a tool is missing or you aren't signed in, give the user the title and description to use, and add the step with `ourkit pending add`.
 7. **Update the Project Log and Lessons,** only if this change has a Change Report, then commit and push them:
    - Run `ourkit log add "<name>" "<one-sentence summary>" "<PR link>"`.
    - Save what's worth remembering with `ourkit lessons add <cost|quality> "<lesson>"`. **Cost** means something like a Stage that cost unusually much, and **quality** means something like an error Reviewers keep catching or a Teach-back question often missed. Write each in one line that would change how a future plan is made, and save nothing if this change taught nothing. Only about 30 lines are kept, and the oldest drop off, so make them count.

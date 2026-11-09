@@ -57,4 +57,6 @@ Tickets don't need a Connector. They use a Tracker Pack, which works through the
 
 ## Finishing
 
+Mention that the user can see where they are at any time, at no token cost, by running `ourkit statusline on`, and that `/ourkit-status` gives the details.
+
 End with the Next line (`.ourkit/kit/core/next-step.md`): the user commits the `.ourkit` and `.claude` folders, then describes their first change. For a project with an interface, suggest `/ourkit-design` first.
