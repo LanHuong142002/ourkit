@@ -68,7 +68,7 @@ test('a Feature goes through every Stage and an Epic is split', () => {
   tier('set', 'feature', '--reason', 'r');
   assert.deepStrictEqual(shown().stages, ['Spec', 'Plan', 'Tasks', 'Build', 'Review', 'QA', 'Ship']);
   tier('set', 'epic', '--reason', 'r');
-  assert.deepStrictEqual(shown().stages, ['Grill', 'Split into Features']);
+  assert.deepStrictEqual(shown().stages, ['Grill', 'Prototype', 'Split into Features']);
 });
 
 test('refuses a Patch when the agent declared a Sensitive Area, even for one line', () => {

@@ -93,8 +93,16 @@ A control point between two Stages; its severity (blocking or only reminding) de
 _Avoid_: check, guard, checkpoint
 
 **Mockup**:
-A static HTML picture of a change people will see, made in Plan before anything is built; the user approves it before the plan, and Build, Review and QA check the result against it. Changing it after approval needs a new approval.
-_Avoid_: prototype, wireframe, design
+A static HTML picture of a Feature people will see, made in Plan before anything is built; the user approves it before the plan, and Build, Review and QA check the result against it. When the Feature comes from an Epic with a Prototype, it starts from the Prototype's screens. Changing it after approval needs a new approval.
+_Avoid_: wireframe, design
+
+**Prototype**:
+A clickable picture of a whole Epic, often a whole product: every screen and the way between them, with made-up data and no backend, made after the Grill; the user approves it before the Epic is split, and each Feature names the screens it builds. It's never part of the project's code.
+_Avoid_: mockup (for a whole Epic), demo, MVP
+
+**Observe**:
+The first step of an Epic built after an existing app: studying how that app behaves, with REA (`/reverse-engineer-anything`, from https://github.com/morluto/rea, linked and never rebuilt) when it's installed, before the Grill. It learns behaviour and never copies the look.
+_Avoid_: clone, copy
 
 **Tier**:
 The size of a change (Patch, Feature or Epic), which decides the Stages and Gates it must pass through; the agent proposes a Tier with a reason and the user confirms.

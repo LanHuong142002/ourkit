@@ -13,7 +13,7 @@ flowchart LR
     size -->|Normal| n1[Spec] --> m1[Mockup, if you'll see it] --> mok{{🙋 You approve the look}} --> n2[Plan] --> ok{{🙋 You approve the plan}}
     ok --> n3[Tasks] --> n4[Build] --> n5[Review] --> n5b[QA] --> n6[Ship] --> pr([🔀 You merge the PR])
 
-    size -->|Huge| h1[Grill you] --> h2[Split into normal pieces] --> n1
+    size -->|Huge| h0[Study an app like it, with REA] --> h1[Grill you] --> hp[Prototype of the whole thing] --> hok{{🙋 You approve it}} --> h2[Split into normal pieces] --> n1
 
     bug([🐞 A bug]) --> b1[Reproduce] --> b2[Fix] --> b3[Verify] --> b4[Review] --> n6
 ```
@@ -39,7 +39,7 @@ It asks two things; pick with the arrow keys and Enter:
 
 Don't like questions? `--entry new|existing --roles backend,frontend|full-stack|none`.
 
-**2. Commit** everything it added. Teammates who clone the project get the same setup for free.
+**2. Commit** everything it added, in a commit of its own. Teammates who clone the project get the same setup for free. It also marks the kit's files as generated in `.gitattributes`, so GitHub folds them away in pull requests.
 
 **3. Run `/ourkit-init`** in Claude Code. Pick Opus with `/model` first; it's the one ourkit expects.
 
@@ -79,7 +79,7 @@ You don't have to memorise this: whenever a skill stops or finishes, it ends wit
 | `/ourkit-qa` | After Review | A tester runs the app and checks each Acceptance Criterion from the spec | `/ourkit-ship` |
 | `/ourkit-ship` | After QA | Writes a summary and opens the PR | ✋ **you merge**, then `/ourkit-deploy` if you want |
 | `/ourkit-bugfix` | Something's broken | Proves the bug exists, fixes the real cause, proves it's gone | `/ourkit-review`, then `/ourkit-ship` |
-| `/ourkit-epic` | It's too big for one PR | Grills you, then splits it into normal-sized pieces | Each piece: `/ourkit-spec` or `/ourkit-handsoff` |
+| `/ourkit-epic` | It's too big for one PR, or a whole product | Studies an app like it with REA, grills you, shows the whole thing as a clickable prototype, then splits it into normal-sized pieces | Each piece: `/ourkit-spec` or `/ourkit-handsoff` |
 | `/ourkit-status` | You're lost | Says what's done, what's waiting for you and what to run next, from one cheap command | Whatever its Next line says |
 | `/ourkit-huh` | You want to understand a change | Explains it from the real code, then checks it explained well | `/ourkit-ship`, or merge |
 | `/ourkit-design` | The UI looks AI-made | Finds design sources, fits the one you paste to your project | ✋ you approve, then commit `DESIGN.md` |
@@ -101,7 +101,7 @@ First ourkit sizes it and asks you to confirm:
 |---|---|---|
 | **Patch** (small) | A small change that touches nothing risky | Build, Review |
 | **Feature** (normal) | Anything else that fits in one PR | Spec, Plan, Tasks, Build, Review, QA, Ship |
-| **Epic** (huge) | Too big for one PR | Grill, then split into Features |
+| **Epic** (huge) | Too big for one PR | Observe, Grill, Prototype, then split into Features |
 
 **Risky** means sign-in and permissions, data, database structure, money, or a public API. Anything touching those is at least a Feature, even a one-line change, and you can't talk it down. Our example touches sign-in, so it's a Feature.
 
@@ -198,9 +198,11 @@ Build, then Review against your checklists. No spec, no plan, no PR: you commit 
 
 ### 🐘 Something huge: `/ourkit-epic`
 
-1. **Grill.** It reads the code, then questions you one question at a time until the goal, the limits and the big decisions are clear.
-2. **Split.** It cuts the work into Features that each deliver something on their own.
-3. You agree to the list, and it creates the tickets. Each Feature then goes through the normal steps on its own branch.
+1. **Observe.** Building something like an app that already exists? Name it, and it studies how that app behaves with [REA](https://github.com/morluto/rea) (`/reverse-engineer-anything`) before asking you anything. REA is a separate open-source tool; install it once with `npx rea-agents setup`, then restart Claude Code. It learns the behaviour, never copies the look. No such app? It starts from how you do the work today, or your sketches.
+2. **Grill.** It reads the code, then questions you one question at a time until the goal, the limits and the big decisions are clear.
+3. **Prototype.** It builds the whole thing as a clickable prototype with made-up data: every screen for a new product, or only the new screens and the ways into them for an app that already runs, in `.ourkit/prototypes/<change>/`. It opens in Claude Code's browser pane. You click around, say what's off, and round it goes. **Nothing gets split until you approve it.**
+4. **Split.** It cuts the work into Features that each deliver something on their own, each pointing at the prototype screens it builds. A Feature's mockup later starts from those screens, so the whole product keeps one look.
+5. You agree to the list, and it creates the tickets. Each Feature then goes through the normal steps on its own branch.
 
 ### 🎨 A look of your own: `/ourkit-design`
 

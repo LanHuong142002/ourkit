@@ -215,6 +215,17 @@ test('removes the .gitignore block of 0.2.0 and keeps the project\'s own lines',
   assert.match(result.stdout, /removed the kit's block from \.gitignore; commit the kit's files/);
 });
 
+test('marks the kit\'s files as generated for a project installed before that existed', () => {
+  fs.rmSync(abs('.gitattributes'));
+  asOldVersion(CORE, 'old content');
+  const result = upgrade();
+  assert.strictEqual(result.status, 0, result.stderr);
+  assert.match(read('.gitattributes'), /^\.ourkit\/kit\/\*\* linguist-generated=true$/m);
+  assert.match(result.stdout, /marked the kit's files as generated/);
+  asOldVersion(CORE, 'old content');
+  assert.doesNotMatch(upgrade().stdout, /marked the kit's files as generated/);
+});
+
 test('deletes a .gitignore that held only the kit\'s block', () => {
   write('.gitignore', '# ourkit:start: managed by ourkit.\n.ourkit/kit/\n# ourkit:end\n');
   asOldVersion(CORE, 'old content');

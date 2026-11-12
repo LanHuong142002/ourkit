@@ -38,6 +38,30 @@ test('copies Stages, Core, selected Roles and the command', () => {
   assert.ok(!exists('.ourkit/kit/roles/frontend'));
 });
 
+test('marks the kit\'s files as generated and nothing else', () => {
+  fs.writeFileSync(path.join(project, '.gitattributes'), '*.png binary\n');
+  assert.strictEqual(install().status, 0);
+  spawnSync('git', ['init', '-q'], { cwd: project });
+  const generated = (file) => spawnSync('git', ['check-attr', 'linguist-generated', '--', file], { cwd: project, encoding: 'utf8' }).stdout.trim().endsWith(': true');
+  for (const file of ['.ourkit/kit/bin/ourkit.js', '.ourkit/install.json', STAGE.replace(/\\/g, '/'), '.claude/agents/ourkit-runner.md', '.claude/rules/ourkit.md']) {
+    assert.ok(generated(file), `${file} should be marked as generated`);
+  }
+  for (const file of ['package.json', '.ourkit/overrides/stages/ourkit-init/SKILL.md', '.ourkit/specs/x.md', '.claude/skills/mine/SKILL.md']) {
+    assert.ok(!generated(file), `${file} should not be marked as generated`);
+  }
+  const text = fs.readFileSync(path.join(project, '.gitattributes'), 'utf8');
+  assert.ok(text.startsWith('*.png binary\n\n# ourkit:start'), 'the project\'s own lines stay first');
+});
+
+test('rewrites the generated block in place, so running it again changes nothing', () => {
+  const { markGenerated } = require('../src/install');
+  assert.strictEqual(markGenerated(project), true);
+  fs.appendFileSync(path.join(project, '.gitattributes'), '*.svg text\n');
+  const before = fs.readFileSync(path.join(project, '.gitattributes'), 'utf8');
+  assert.strictEqual(markGenerated(project), false);
+  assert.strictEqual(fs.readFileSync(path.join(project, '.gitattributes'), 'utf8'), before);
+});
+
 test('installs Full-stack as both Roles', () => {
   assert.strictEqual(install(['--entry', 'brownfield', '--roles', 'full-stack']).status, 0);
   assert.deepStrictEqual(record().roles, ['backend', 'frontend']);
