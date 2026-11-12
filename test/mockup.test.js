@@ -132,3 +132,70 @@ test('the Plan skill makes the mockup before the plan, and later Stages check ag
   assert.match(read('roles/frontend/checklist.md'), /mockup/i);
   assert.match(read('README.md'), /ourkit mockup|mockup/i);
 });
+
+function setUpEpic(roles) {
+  git('init', '-q', '-b', 'main');
+  fs.writeFileSync(path.join(project, 'a.txt'), 'x');
+  git('add', '-A');
+  git('commit', '-q', '-m', 'first');
+  ourkit('--entry', 'new', '--roles', roles);
+  git('add', '-A');
+  git('commit', '-q', '-m', 'kit');
+  git('switch', '-q', '-c', 'whole-app');
+  ourkit('tier', 'set', 'epic', '--reason', 'a whole product');
+}
+
+const EPIC = '## F1 Sign in\n\n**Summary:** s\n\n**User Story:** As a u, I want w, so that v\n\n**Context:** c\n\n**Scope Boundary:**\n- In: i\n- Out: o\n\n**Links & References:** Prototype screens: Sign in\n**Blocked by:** none\n';
+const split = () => ourkit('gate', 'artifact', 'epic');
+
+test('an Epic has a prototype folder, not a mockup', () => {
+  setUpEpic('frontend');
+  assert.strictEqual(ourkit('prototype', 'path').stdout.trim(), '.ourkit/prototypes/whole-app/index.html');
+  const wrong = ourkit('mockup', 'path');
+  assert.strictEqual(wrong.status, 2);
+  assert.match(wrong.stderr, /an Epic has a prototype, so use `ourkit prototype`/);
+});
+
+test('a Feature has no prototype', () => {
+  setUp('frontend');
+  const wrong = ourkit('prototype', 'show');
+  assert.strictEqual(wrong.status, 2);
+  assert.match(wrong.stderr, /only an Epic has a prototype/);
+});
+
+test('with the frontend Role, an Epic is not split until its prototype is approved', () => {
+  setUpEpic('frontend');
+  write(ourkit('gate', 'path', 'epic').stdout.trim(), EPIC);
+  assert.match(split().stdout, /needs a prototype/);
+  assert.strictEqual(ourkit('prototype', 'need', 'yes').status, 0);
+  assert.match(split().stdout, /doesn't exist yet/);
+  const index = ourkit('prototype', 'path').stdout.trim();
+  write(index, '<a href="board.html">Board</a>');
+  write(index.replace('index.html', 'board.html'), '<h1>Board</h1>');
+  assert.match(split().stdout, /not approved the prototype/);
+  assert.strictEqual(ourkit('prototype', 'approve').status, 0);
+  assert.strictEqual(split().status, 0);
+  write(index.replace('index.html', 'board.html'), '<h1>Board, changed</h1>');
+  assert.match(split().stdout, /prototype changed after the user approved it/, 'any file in the folder counts');
+});
+
+test('an Epic with nothing people see records why and splits', () => {
+  setUpEpic('frontend');
+  write(ourkit('gate', 'path', 'epic').stdout.trim(), EPIC);
+  assert.strictEqual(ourkit('prototype', 'need', 'no', '--reason', 'a batch job').status, 0);
+  assert.strictEqual(split().status, 0);
+});
+
+test('status waits for the user at the prototype, then moves on to the split', () => {
+  setUpEpic('frontend');
+  const status = () => JSON.parse(ourkit('status').stdout);
+  assert.strictEqual(status().current, 'Grill');
+  ourkit('prototype', 'need', 'yes');
+  write(ourkit('prototype', 'path').stdout.trim(), '<h1>Home</h1>');
+  const waiting = status();
+  assert.strictEqual(waiting.current, 'Prototype');
+  assert.match(waiting.next.text, /approve the prototype/);
+  assert.ok(waiting.waiting.some((item) => /look at the prototype/.test(item.text)));
+  ourkit('prototype', 'approve');
+  assert.strictEqual(status().current, 'Split into Features');
+});

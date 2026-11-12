@@ -201,8 +201,13 @@ for (const fixture of FIXTURES) {
     startChange();
     write('notes.txt');
     ok('tier', 'set', 'epic', '--reason', 'Too large');
-    assert.deepStrictEqual(JSON.parse(ok('tier', 'show')).stages, ['Grill', 'Split into Features']);
+    assert.deepStrictEqual(JSON.parse(ok('tier', 'show')).stages, ['Grill', 'Prototype', 'Split into Features']);
     writeDoc('epic', EPIC);
+    blocked('gate', 'artifact', 'epic');
+    ok('prototype', 'need', 'yes');
+    write(ok('prototype', 'path').trim(), '<h1>Home</h1>');
+    blocked('gate', 'artifact', 'epic');
+    ok('prototype', 'approve');
     ok('gate', 'artifact', 'epic');
   });
 
