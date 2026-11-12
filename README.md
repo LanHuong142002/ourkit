@@ -10,17 +10,17 @@ flowchart LR
 
     size -->|Small| s1[Build] --> s2[Review] --> s3([✅ You commit])
 
-    size -->|Normal| n1[Spec] --> n2[Plan] --> ok{{🙋 You approve the plan}}
+    size -->|Normal| n1[Spec] --> m1[Mockup, if you'll see it] --> mok{{🙋 You approve the look}} --> n2[Plan] --> ok{{🙋 You approve the plan}}
     ok --> n3[Tasks] --> n4[Build] --> n5[Review] --> n5b[QA] --> n6[Ship] --> pr([🔀 You merge the PR])
 
     size -->|Huge| h1[Grill you] --> h2[Split into normal pieces] --> n1
 
-    bug([🐞 A bug]) --> b1[Reproduce] --> b2[Fix] --> b3[Verify] --> n5
+    bug([🐞 A bug]) --> b1[Reproduce] --> b2[Fix] --> b3[Verify] --> b4[Review] --> n6
 ```
 
 You need Claude Code, plus Node 18 or later for the install. Each word in **bold** below is explained the first time it shows up.
 
-**Jump to:** [Set it up](#set-it-up) · [Cheat sheet](#cheat-sheet) · [A normal change, step by step](#a-normal-change-step-by-step) · [Bugs, small fixes and huge things](#bugs-small-fixes-and-huge-things) · [Never get lost](#never-get-lost) · [Let it work without you](#let-it-work-without-you) · [Tickets and Project boards](#tickets-and-project-boards) · [Make it yours](#make-it-yours) · [Things to know](#things-to-know)
+**Jump to:** [Set it up](#set-it-up) · [Cheat sheet](#cheat-sheet) · [A normal change, step by step](#a-normal-change-step-by-step) · [Bugs, small fixes and huge things](#bugs-small-fixes-and-huge-things) · [Never get lost](#never-get-lost) · [Let it work without you](#let-it-work-without-you) · [Connect GitHub](#connect-github) · [Make it yours](#make-it-yours) · [Things to know](#things-to-know)
 
 ## Set it up
 
@@ -48,7 +48,7 @@ Don't like questions? `--entry new|existing --roles backend,frontend|full-stack|
 
 **4. Optional extras:**
 
-- Tickets live in GitHub Issues? `npx github:LanHuong142002/ourkit tracker add github`. It asks where progress should show: labels on the issue, the Status column of a GitHub Project board, or both. See [Tickets and Project boards](#tickets-and-project-boards).
+- Tickets live in GitHub Issues, or on a Project board? See [Connect GitHub](#connect-github).
 - Want your own look instead of the usual AI one? `/ourkit-design`
 - House rules for your project? Write them in `.ourkit/rules.md`
 
@@ -72,7 +72,7 @@ You don't have to memorise this: whenever a skill stops or finishes, it ends wit
 |---|---|---|---|
 | `/ourkit-init` | Right after installing | Learns your project's commands and sets the starting line | Commit, then ask for your first change |
 | `/ourkit-spec` | Starting a normal change | Asks questions until the request is clear | `/ourkit-plan` · ✋ you agree to the spec |
-| `/ourkit-plan` | After the spec | Looks for something that already solves it, then picks the simplest approach | `/ourkit-tasks` · ✋ **you approve the plan** |
+| `/ourkit-plan` | After the spec | Shows a mockup first if you'll see the change, then looks for something that already solves it and picks the simplest approach | `/ourkit-tasks` · ✋ **you approve the mockup, then the plan** |
 | `/ourkit-tasks` | After the plan | Cuts the plan into small, checkable tasks | `/ourkit-build` |
 | `/ourkit-build` | After tasks, or for a small fix | Writes the code, test first, one task at a time | `/ourkit-review` |
 | `/ourkit-review` | After Build | A fresh pair of eyes checks the work | Normal change: `/ourkit-qa`. Bug: `/ourkit-ship`. Small fix: ✋ you commit |
@@ -121,9 +121,15 @@ Result: `.ourkit/specs/<change>.md`, with numbered requirements that can each be
 
 ### 2. Plan: "how will we build it?"
 
-Before inventing anything, it checks whether your project or its libraries already solve this, and reuses what it finds. Then it picks the simplest approach and says how each requirement will be tested.
+**If you'll see the change, you see it first.** A new screen, a changed form, a new message: before any plan or code, ourkit draws a mockup, one HTML file at `.ourkit/mockups/<change>.html` that opens in any browser. It shows every screen the change touches, in each state (normal, loading, empty, error), with real-looking content, your `DESIGN.md` if you have one, and labels like "R3" saying which requirement each part is for. In the Claude Code app it opens in the browser pane.
 
-Result: `.ourkit/plans/<change>.md`. **Nothing gets built until you approve the plan.** If the plan changes afterwards, it asks you again.
+You say what's off, it edits the mockup, and round it goes until it looks right. Changing a picture is cheap; rebuilding a finished screen isn't. **Nothing gets planned until you approve the mockup**, and Build, Review and QA all check the result against it. If the mockup changes after you approve it, it asks you again.
+
+With the `frontend` Role, ourkit has to decide for every Feature whether it needs one, and say why not if it doesn't, such as "only changes an API". You can always ask for one anyway.
+
+Then, before inventing anything, it checks whether your project or its libraries already solve this, and reuses what it finds. Then it picks the simplest approach and says how each requirement will be tested.
+
+Result: `.ourkit/plans/<change>.md`, plus the mockup if there is one. **Nothing gets built until you approve the plan.** If the plan changes afterwards, it asks you again.
 
 ### 3. Tasks: "cut it into bites"
 
@@ -233,33 +239,62 @@ node .ourkit/kit/bin/ourkit.js loop run --hours 4 --wait 42 43 44
 
 When it's done, run `/ourkit-run-report`. See [core/loop-run.md](core/loop-run.md) for the fine print.
 
-On Windows, Git Bash sometimes can't find `gh`. If a session complains, add this to `~/.bashrc`:
+## Connect GitHub
 
-```
-export PATH="$PATH:/c/Program Files/GitHub CLI"
-```
+With GitHub connected, ourkit reads tickets from GitHub Issues, opens PRs that close them, and shows each ticket's progress as labels, on a Project board, or both. Set it up once per project; after that it runs by itself.
 
-## Tickets and Project boards
+### What you set up, once
 
-Once the GitHub pack is installed, ourkit updates a ticket as the work moves: in progress at Spec, blocked when it gets stuck, in review when the PR opens. It never closes a ticket; merging the PR does that.
+**On your machine** (once, for every project):
 
-You choose where that progress shows:
+1. Install the [GitHub CLI](https://cli.github.com/) and sign in: `gh auth login`.
+2. Using a Project board? Give `gh` access to it: `gh auth refresh -s project`.
+3. On Windows, if a session says it can't find `gh`, add `export PATH="$PATH:/c/Program Files/GitHub CLI"` to `~/.bashrc`.
 
-| Option | What moves |
-|---|---|
-| `labels` (default) | Labels on the issue: `ourkit:in-progress`, `ourkit:in-review`, `ourkit:blocked` |
-| `project` | The card's Status column on a GitHub Project board |
-| `both` | Both of the above |
+**In the project** (once):
 
-Change it any time with `node .ourkit/kit/bin/ourkit.js tracker progress <labels|project|both>`. The choice lives in `.ourkit/tracker.json`, which belongs to your project, so commit it and upgrades leave it alone.
+1. Install the GitHub pack: `npx github:LanHuong142002/ourkit tracker add github`. It asks where progress should show:
 
-**For a Project board:**
+   | Option | What moves |
+   |---|---|
+   | `labels` (default) | Labels on the issue: `ourkit:in-progress`, `ourkit:in-review`, `ourkit:blocked` |
+   | `project` | The card's Status column on a GitHub Project board |
+   | `both` | Both of the above |
 
-1. Give `gh` access to Projects once: `gh auth refresh -s project`.
-2. The first time ourkit updates a ticket, it lists your boards, matches "in progress", "in review" and "blocked" to your columns, and asks you to confirm. A status with no matching column just doesn't move the card.
-3. When the PR merges and closes the issue, the board's built-in "Item closed" workflow moves the card to Done. Turn that workflow on in the board's settings if it's off.
+   Pick `both` if your team watches a board. Change it any time with `node .ourkit/kit/bin/ourkit.js tracker progress <labels|project|both>`.
+2. Commit what it added.
 
-In Hands-off, ourkit won't guess a board. It uses labels for now and leaves you a note to pick one.
+**On the board** (once, only if you use one), in GitHub:
+
+1. **Columns.** Give the Status field a column for each step you want to see: In Progress, In Review, Blocked. GitHub's Board template only has Todo, In Progress and Done, so add the other two if you want them. A step with no column still shows as a label; it just doesn't move the card.
+2. **Workflows.** In the board's ⋯ menu → Workflows, turn on **Item closed** (moves the card to Done when the PR merges) and, if you like, **Item added to project** (puts new issues in Todo). Only you can turn these on; ourkit checks and tells you if Item closed is off.
+
+**The first ticket** you work on, in Pair mode: ourkit lists your boards, matches its steps to your columns, and asks you to confirm. It saves that in `.ourkit/tracker.json` and offers to move cards that are already out of date. Commit that file and **get it merged into your default branch**. A board setting that only lives on an unmerged branch is lost, and the next change goes back to labels.
+
+### What happens by itself
+
+| When | The ticket | The card |
+|---|---|---|
+| Spec starts on it | `ourkit:in-progress` | In Progress |
+| A task gets stuck | `ourkit:blocked`, with a comment saying why | Blocked |
+| Ship opens the PR | `ourkit:in-review`, with the PR link and summary | In Review |
+| You merge the PR | Closed by the PR's `Closes #…` | Done, by the Item closed workflow |
+
+- ourkit never closes a ticket or claims work is done; merging does that.
+- A ticket that isn't on the board yet is added the first time its card moves.
+- Every update sets the card to where the work is now, so a move that failed once is put right by the next.
+- On `labels`, if a ticket turns out to sit on a board, ourkit notices and offers to move cards there too.
+- Ask "bring the board up to date" any time: it lists the cards in the wrong column, and moves them once you agree.
+- In Hands-off it never guesses a board. It uses labels and leaves you a note to pick one in Pair.
+
+### If cards don't move
+
+| You see | Why | Fix |
+|---|---|---|
+| Labels change, cards stay in Todo | Progress is `labels`, or `.ourkit/tracker.json` never reached the default branch | `tracker progress both`, then merge `.ourkit/tracker.json` |
+| Closed tickets stay out of Done | The Item closed workflow is off | Turn it on, then ask ourkit to bring the board up to date |
+| "missing the project scope" | `gh` can't see boards yet | `gh auth refresh -s project` |
+| A step never shows on the board | The board has no column for it | Add the column, then ask ourkit to set up the board again |
 
 ## Make it yours
 

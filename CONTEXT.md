@@ -92,6 +92,10 @@ _Avoid_: summary, run log
 A control point between two Stages; its severity (blocking or only reminding) depends on the Tier of the change.
 _Avoid_: check, guard, checkpoint
 
+**Mockup**:
+A static HTML picture of a change people will see, made in Plan before anything is built; the user approves it before the plan, and Build, Review and QA check the result against it. Changing it after approval needs a new approval.
+_Avoid_: prototype, wireframe, design
+
 **Tier**:
 The size of a change (Patch, Feature or Epic), which decides the Stages and Gates it must pass through; the agent proposes a Tier with a reason and the user confirms.
 _Avoid_: size, level, mode
