@@ -93,6 +93,7 @@ for (const fixture of FIXTURES) {
     blocked('gate', 'approval');
     writeDoc('plan', PLAN);
     blocked('gate', 'approval');
+    ok('mockup', 'need', 'no', '--reason', 'nothing people see changes');
     ok('gate', 'approve-plan');
     ok('gate', 'approval');
 
@@ -138,6 +139,7 @@ for (const fixture of FIXTURES) {
     writeDoc('spec', SPEC);
     writeDoc('plan', PLAN);
     blocked('gate', 'approval');
+    ok('mockup', 'need', 'no', '--reason', 'nothing people see changes');
     ok('gate', 'approve-plan');
     ok('gate', 'approval');
     writeDoc('tasks', TASKS);

@@ -117,3 +117,15 @@ test('the operations a guide relies on exist in the GitHub pack', () => {
     assert.ok(operations.includes(label), label);
   }
 });
+
+test('the board looks after itself: notices a board, re-sets each move, checks Done, and catches up with consent', () => {
+  const ops = read('tracker-packs/github/operations.md');
+  assert.match(ops, /--json projectItems/, 'labels mode checks whether the ticket sits on a board');
+  assert.match(ops, /ourkit tracker progress both/);
+  assert.match(ops, /Move it every time you update the status/);
+  assert.match(ops, /workflows\(first:20\)/, 'it checks the Item closed workflow is on');
+  assert.match(ops, /\*\*Catch up:\*\*/);
+  assert.match(ops, /wait for their agreement before moving anything/);
+  assert.match(ops, /In Hands-off, don't catch up/);
+  assert.match(read('core/tracker.md'), /a missed update is put right by the next one/);
+});
