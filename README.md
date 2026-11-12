@@ -20,7 +20,7 @@ flowchart LR
 
 You need Claude Code, plus Node 18 or later for the install. Each word in **bold** below is explained the first time it shows up.
 
-**Jump to:** [Set it up](#set-it-up) · [Cheat sheet](#cheat-sheet) · [A normal change, step by step](#a-normal-change-step-by-step) · [Bugs, small fixes and huge things](#bugs-small-fixes-and-huge-things) · [Never get lost](#never-get-lost) · [Let it work without you](#let-it-work-without-you) · [Tickets and Project boards](#tickets-and-project-boards) · [Make it yours](#make-it-yours) · [Things to know](#things-to-know)
+**Jump to:** [Set it up](#set-it-up) · [Cheat sheet](#cheat-sheet) · [A normal change, step by step](#a-normal-change-step-by-step) · [Bugs, small fixes and huge things](#bugs-small-fixes-and-huge-things) · [Never get lost](#never-get-lost) · [Let it work without you](#let-it-work-without-you) · [Connect GitHub](#connect-github) · [Make it yours](#make-it-yours) · [Things to know](#things-to-know)
 
 ## Set it up
 
@@ -48,7 +48,7 @@ Don't like questions? `--entry new|existing --roles backend,frontend|full-stack|
 
 **4. Optional extras:**
 
-- Tickets live in GitHub Issues? `npx github:LanHuong142002/ourkit tracker add github`. It asks where progress should show: labels on the issue, the Status column of a GitHub Project board, or both. See [Tickets and Project boards](#tickets-and-project-boards).
+- Tickets live in GitHub Issues, or on a Project board? See [Connect GitHub](#connect-github).
 - Want your own look instead of the usual AI one? `/ourkit-design`
 - House rules for your project? Write them in `.ourkit/rules.md`
 
@@ -239,36 +239,62 @@ node .ourkit/kit/bin/ourkit.js loop run --hours 4 --wait 42 43 44
 
 When it's done, run `/ourkit-run-report`. See [core/loop-run.md](core/loop-run.md) for the fine print.
 
-On Windows, Git Bash sometimes can't find `gh`. If a session complains, add this to `~/.bashrc`:
+## Connect GitHub
 
-```
-export PATH="$PATH:/c/Program Files/GitHub CLI"
-```
+With GitHub connected, ourkit reads tickets from GitHub Issues, opens PRs that close them, and shows each ticket's progress as labels, on a Project board, or both. Set it up once per project; after that it runs by itself.
 
-## Tickets and Project boards
+### What you set up, once
 
-Once the GitHub pack is installed, ourkit updates a ticket as the work moves: in progress at Spec, blocked when it gets stuck, in review when the PR opens. It never closes a ticket; merging the PR does that.
+**On your machine** (once, for every project):
 
-You choose where that progress shows:
+1. Install the [GitHub CLI](https://cli.github.com/) and sign in: `gh auth login`.
+2. Using a Project board? Give `gh` access to it: `gh auth refresh -s project`.
+3. On Windows, if a session says it can't find `gh`, add `export PATH="$PATH:/c/Program Files/GitHub CLI"` to `~/.bashrc`.
 
-| Option | What moves |
-|---|---|
-| `labels` (default) | Labels on the issue: `ourkit:in-progress`, `ourkit:in-review`, `ourkit:blocked` |
-| `project` | The card's Status column on a GitHub Project board |
-| `both` | Both of the above |
+**In the project** (once):
 
-Change it any time with `node .ourkit/kit/bin/ourkit.js tracker progress <labels|project|both>`. The choice lives in `.ourkit/tracker.json`, which belongs to your project, so commit it and upgrades leave it alone.
+1. Install the GitHub pack: `npx github:LanHuong142002/ourkit tracker add github`. It asks where progress should show:
 
-**For a Project board:**
+   | Option | What moves |
+   |---|---|
+   | `labels` (default) | Labels on the issue: `ourkit:in-progress`, `ourkit:in-review`, `ourkit:blocked` |
+   | `project` | The card's Status column on a GitHub Project board |
+   | `both` | Both of the above |
 
-1. Give `gh` access to Projects once: `gh auth refresh -s project`.
-2. The first time ourkit updates a ticket, it lists your boards, matches "in progress", "in review" and "blocked" to your columns, and asks you to confirm. A status with no matching column just doesn't move the card.
-3. When the PR merges and closes the issue, the board's built-in "Item closed" workflow moves the card to Done. ourkit checks that it's on and tells you if it isn't, because only you can turn it on, in the board's settings under Workflows.
-4. Commit `.ourkit/tracker.json` and get it merged. If the board setting lives only on a branch that's never merged, the next change starts again with labels.
+   Pick `both` if your team watches a board. Change it any time with `node .ourkit/kit/bin/ourkit.js tracker progress <labels|project|both>`.
+2. Commit what it added.
 
-**It looks after itself.** On `labels`, the first time ourkit updates a ticket that's sitting on a board, it notices and offers to move cards there too. Every update sets the card to where the work is now, so one that was missed is put right by the next. Cards already out of date, for example from before the board was set up, are listed when the board is first set up: you agree to the moves and it catches them up. Ask "bring the board up to date" any time to do it again.
+**On the board** (once, only if you use one), in GitHub:
 
-In Hands-off, ourkit won't guess a board. It uses labels for now and leaves you a note to pick one.
+1. **Columns.** Give the Status field a column for each step you want to see: In Progress, In Review, Blocked. GitHub's Board template only has Todo, In Progress and Done, so add the other two if you want them. A step with no column still shows as a label; it just doesn't move the card.
+2. **Workflows.** In the board's ⋯ menu → Workflows, turn on **Item closed** (moves the card to Done when the PR merges) and, if you like, **Item added to project** (puts new issues in Todo). Only you can turn these on; ourkit checks and tells you if Item closed is off.
+
+**The first ticket** you work on, in Pair mode: ourkit lists your boards, matches its steps to your columns, and asks you to confirm. It saves that in `.ourkit/tracker.json` and offers to move cards that are already out of date. Commit that file and **get it merged into your default branch**. A board setting that only lives on an unmerged branch is lost, and the next change goes back to labels.
+
+### What happens by itself
+
+| When | The ticket | The card |
+|---|---|---|
+| Spec starts on it | `ourkit:in-progress` | In Progress |
+| A task gets stuck | `ourkit:blocked`, with a comment saying why | Blocked |
+| Ship opens the PR | `ourkit:in-review`, with the PR link and summary | In Review |
+| You merge the PR | Closed by the PR's `Closes #…` | Done, by the Item closed workflow |
+
+- ourkit never closes a ticket or claims work is done; merging does that.
+- A ticket that isn't on the board yet is added the first time its card moves.
+- Every update sets the card to where the work is now, so a move that failed once is put right by the next.
+- On `labels`, if a ticket turns out to sit on a board, ourkit notices and offers to move cards there too.
+- Ask "bring the board up to date" any time: it lists the cards in the wrong column, and moves them once you agree.
+- In Hands-off it never guesses a board. It uses labels and leaves you a note to pick one in Pair.
+
+### If cards don't move
+
+| You see | Why | Fix |
+|---|---|---|
+| Labels change, cards stay in Todo | Progress is `labels`, or `.ourkit/tracker.json` never reached the default branch | `tracker progress both`, then merge `.ourkit/tracker.json` |
+| Closed tickets stay out of Done | The Item closed workflow is off | Turn it on, then ask ourkit to bring the board up to date |
+| "missing the project scope" | `gh` can't see boards yet | `gh auth refresh -s project` |
+| A step never shows on the board | The board has no column for it | Add the column, then ask ourkit to set up the board again |
 
 ## Make it yours
 
