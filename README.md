@@ -200,7 +200,7 @@ Build, then Review against your checklists. No spec, no plan, no PR: you commit 
 
 1. **Observe.** Building something like an app that already exists? Name it, and it studies how that app behaves with [REA](https://github.com/morluto/rea) (`/reverse-engineer-anything`) before asking you anything. REA is a separate open-source tool; install it once with `npx rea-agents setup`, then restart Claude Code. It learns the behaviour, never copies the look. No such app? It starts from how you do the work today, or your sketches.
 2. **Grill.** It reads the code, then questions you one question at a time until the goal, the limits and the big decisions are clear.
-3. **Prototype.** It builds the whole thing as a clickable prototype, every screen with made-up data, in `.ourkit/prototypes/<change>/`. It opens in Claude Code's browser pane. You click around, say what's off, and round it goes. **Nothing gets split until you approve it.**
+3. **Prototype.** It builds the whole thing as a clickable prototype with made-up data: every screen for a new product, or only the new screens and the ways into them for an app that already runs, in `.ourkit/prototypes/<change>/`. It opens in Claude Code's browser pane. You click around, say what's off, and round it goes. **Nothing gets split until you approve it.**
 4. **Split.** It cuts the work into Features that each deliver something on their own, each pointing at the prototype screens it builds. A Feature's mockup later starts from those screens, so the whole product keeps one look.
 5. You agree to the list, and it creates the tickets. Each Feature then goes through the normal steps on its own branch.
 

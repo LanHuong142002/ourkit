@@ -109,5 +109,5 @@ test('the Epic skill observes with REA, prototypes, then splits', () => {
   const order = ['## Observe', '/reverse-engineer-anything', '## Grill', '## Prototype', 'ourkit prototype approve', '## Split'].map((text) => stage.indexOf(text));
   assert.ok(order.every((at) => at >= 0), 'every step is there');
   assert.deepStrictEqual([...order].sort((a, b) => a - b), order, 'in this order');
-  for (const required of ["isn't installed", 'https://github.com/morluto/rea', 'Quick start', 'never copy the look', 'Prototype screens']) assert.ok(stage.includes(required), required);
+  for (const required of ["isn't installed", 'https://github.com/morluto/rea', 'Quick start', 'never copy the look', 'Prototype screens', 'An app that already runs', 'never redesign it']) assert.ok(stage.includes(required), required);
 });
